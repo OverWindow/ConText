@@ -1,0 +1,29 @@
+# Independent frontend image verification. Deploy frontend/ directly to Vercel.
+name: ${COMPOSE_PROJECT_NAME:-docs-frontend-production}
+
+services:
+  frontend:
+    image: ${FRONTEND_IMAGE:-context-frontend}:${IMAGE_TAG:-local}
+    build:
+      context: ./frontend
+      target: production
+      args: &frontend-public-environment
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?Set NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?Set NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        # Public API origin; the client appends /api.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL to the public backend origin}
+    environment:
+      <<: *frontend-public-environment
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${FRONTEND_PORT:-3000}}
+      DESKTOP_MAC_DOWNLOAD_URL: ${DESKTOP_MAC_DOWNLOAD_URL:-}
+      DESKTOP_WINDOWS_DOWNLOAD_URL: ${DESKTOP_WINDOWS_DOWNLOAD_URL:-}
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/', r => { r.resume(); process.exit(r.statusCode >= 200 && r.statusCode < 400 ? 0 : 1); }).on('error', () => process.exit(1));"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10

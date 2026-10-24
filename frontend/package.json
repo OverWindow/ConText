@@ -1,0 +1,45 @@
+{
+  "name": "context-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "brand:build": "node scripts/build-brand-assets.mjs",
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "test:documents": "playwright test --config=playwright.documents.config.ts",
+    "test:canvas": "playwright test --config=playwright.canvas.config.ts",
+    "test:phase4": "playwright test --config=playwright.phase4.config.ts",
+    "test:versions": "playwright test --config=playwright.versions.config.ts",
+    "test:elements": "playwright test --config=playwright.elements.config.ts",
+    "test:intelligence": "playwright test --config=playwright.intelligence.config.ts",
+    "test:conversion": "playwright test --config=playwright.conversion.config.ts",
+    "test:rag": "playwright test --config=playwright.rag.config.ts",
+    "test:writing": "playwright test --config=playwright.writing.config.ts"
+  },
+  "dependencies": {
+    "@editorjs/editorjs": "2.31.7",
+    "@editorjs/header": "2.8.9",
+    "@editorjs/list": "2.0.9",
+    "@editorjs/table": "2.4.6",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.2",
+    "@xyflow/react": "12.12.0",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-icons": "5.7.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.4.3",
+    "typescript": "^5.9.0"
+  }
+}

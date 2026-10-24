@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConText — Color &amp; UI</title>
+<link rel="stylesheet" href="../frontend/design/tokens.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--text);font:15px/1.7 system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:64px 28px}header{margin-bottom:40px}.label{color:var(--secondary-strong);font-size:12px;font-weight:700;letter-spacing:2px}h1{font-size:48px;letter-spacing:-2px;margin:8px 0}h2{margin:36px 0 16px;font-size:21px}p{color:var(--text-muted)}.logo{width:48px;height:48px;background:var(--brand-gradient);color:white;border-radius:14px;display:grid;place-items:center;font-size:23px;font-weight:700}.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.swatch,.sample{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}.color{height:120px;background:var(--swatch)}.caption{padding:16px}.caption code{display:block;color:var(--text-muted)}.samples{display:grid;grid-template-columns:1fr 1fr;gap:20px}.sample{padding:24px;box-shadow:var(--shadow)}.action{display:inline-block;padding:10px 18px;border-radius:10px;background:var(--primary-strong);color:var(--on-primary);font-weight:600}.secondary-action{background:var(--surface);color:var(--text-secondary);border:1px solid var(--border)}.row{display:flex;gap:10px;flex-wrap:wrap}.nav{margin-top:20px;padding:12px;background:var(--primary-soft);color:var(--primary-strong);border-radius:10px;box-shadow:inset 3px 0 var(--primary)}.ai{background:var(--surface-ai)}.citation{background:var(--secondary-soft);color:var(--secondary-strong);border:1px solid var(--secondary-border);border-radius:5px;padding:2px 6px;font-size:12px}.source{margin-top:20px;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.source small{color:var(--text-muted)}.statuses span{padding:6px 12px;border-radius:8px;font-size:12px}.grid{padding:28px;border:1px solid var(--border);border-radius:14px;background-color:var(--background);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}.grid span{display:inline-block;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px}footer{margin-top:36px;color:var(--text-muted);font-size:12px}@media(max-width:640px){main{padding:32px 20px}.swatches{grid-template-columns:1fr 1fr}.samples{grid-template-columns:1fr}h1{font-size:36px}.color{height:90px}}
+</style>
+</head><body><main>
+<header><img src="../frontend/public/brand/context-logo.png" width="300" height="105" alt="ConText" style="display:block;max-width:100%;height:auto;border-radius:12px"><p class="label">CONTEXT / DESIGN FOUNDATION</p><h1>문서를 연결하는 색.</h1><p>명확한 파랑, 보조하는 보라, 읽기 편한 흰 표면.<br>ConText의 실제 디자인 토큰으로 그린 색상표입니다.</p></header>
+<section aria-label="기본 팔레트" class="swatches">
+<div class="swatch"><div class="color" style="--swatch:var(--primary)"></div><div class="caption"><strong>Primary</strong><code>#5B6CFF</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--secondary)"></div><div class="caption"><strong>Secondary</strong><code>#7C4DFF</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--background)"></div><div class="caption"><strong>Background</strong><code>#F7F9FC</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--surface)"></div><div class="caption"><strong>Surface</strong><code>#FFFFFF</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--text)"></div><div class="caption"><strong>Text</strong><code>#1E293B</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--border)"></div><div class="caption"><strong>Border</strong><code>#D9E1F2</code></div></div>
+</section>
+<h2>로고와 이름의 색</h2><section class="swatches" aria-label="브랜드 팔레트">
+<div class="swatch"><div class="color" style="--swatch:var(--brand-indigo)"></div><div class="caption"><strong>Indigo · Text / C</strong><code>#6366F1</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--brand-violet)"></div><div class="caption"><strong>Violet · 연결 노드</strong><code>#A78BFA</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--brand-slate)"></div><div class="caption"><strong>Slate · Con / T</strong><code>#334155</code></div></div>
+<div class="swatch"><div class="color" style="--swatch:var(--brand-light)"></div><div class="caption"><strong>Light Gray-Blue</strong><code>#E5EAF6</code></div></div>
+<div class="sample"><strong>압축 메뉴 / favicon</strong><p><img src="../frontend/public/brand/context-symbol.png" width="64" height="64" alt="ConText 심볼"> <img src="../frontend/public/brand/context-symbol.png" width="32" height="32" alt="32px 아이콘"> <img src="../frontend/public/brand/context-symbol.png" width="16" height="16" alt="16px 아이콘"></p></div>
+</section><h2>실제 적용 예시</h2><section class="samples">
+<div class="sample"><strong>주요 동작과 선택</strong><p>작은 버튼에는 한 단계 진한 파랑을 사용합니다.</p><div class="row"><span class="action">＋ 문서 추가</span><span class="action secondary-action">문서 관리</span></div><div class="nav">▦ &nbsp; 선택된 캔버스</div></div>
+<div class="sample ai"><strong>문서 AI</strong><p>팀 문서를 근거로 답변하고, 인용은 보라색으로 구분합니다. <span class="citation">S1</span></p><div class="source"><strong>S1 · 사업계획서</strong><br><small>V2 · 현재 버전 · 3페이지 · 예시 데이터</small></div></div>
+</section>
+<h2>상태와 배경</h2><div class="row statuses"><span style="background:var(--success-soft);color:var(--success)">✓ 읽기 준비 완료</span><span style="background:var(--warning-soft);color:var(--warning)">처리 대기</span><span style="background:var(--danger-soft);color:var(--danger)">다시 시도 필요</span></div><p>배경과 격자는 문서의 내용을 방해하지 않을 정도로 낮은 대비를 유지합니다.</p><div class="grid"><span><strong>연결된 문서</strong><br><small>흰 표면 · 옅은 테두리 · 차분한 그림자</small></span></div>
+<footer>Source: frontend/design/tokens.css · 자세한 적용 규칙은 ConText-design-guide.md 참고 · 컴포넌트는 정적인 디자인 예시입니다.</footer>
+</main></body></html>

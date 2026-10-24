@@ -1,0 +1,39 @@
+# Isolated disposable database. Run together with the main compose file, profile test.
+services:
+  test-postgres:
+    image: docs-postgres-vector:17-0.8.7
+    build: ./infra/postgres
+    profiles: [test]
+    environment:
+      POSTGRES_USER: workspace
+      POSTGRES_DB: workspace_test
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the selected environment file}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workspace -d workspace_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  test-redis:
+    image: redis:7.4-alpine
+    profiles: [test]
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  backend-test:
+    profiles: [test]
+    build:
+      context: ./backend
+      target: test
+    environment:
+      REDIS_URL: redis://test-redis:6379/0
+      TEST_DATABASE_URL: postgresql+psycopg://workspace:${POSTGRES_PASSWORD}@test-postgres:5432/workspace_test
+    depends_on:
+      test-redis:
+        condition: service_healthy
+      test-postgres:
+        condition: service_healthy

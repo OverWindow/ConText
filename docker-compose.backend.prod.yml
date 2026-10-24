@@ -1,0 +1,102 @@
+# Independent backend image verification. Deploy API/worker/dispatcher separately on Railway.
+name: ${COMPOSE_PROJECT_NAME:-docs-backend-production}
+
+x-backend: &backend
+  image: ${BACKEND_IMAGE:-context-backend}:${IMAGE_TAG:-local}
+  init: true
+  restart: unless-stopped
+  environment:
+    PORT: ${PORT:-8000}
+    DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace}}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    SUPABASE_URL: ${SUPABASE_URL:?Set SUPABASE_URL in .env.backend.production}
+    SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+    SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
+    CORS_ORIGINS: ${CORS_ORIGINS:?Set the frontend origin(s) as a JSON array}
+    AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+    AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    S3_PRESIGNED_URL_TTL: ${S3_PRESIGNED_URL_TTL:-600}
+    MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
+    MINDLOGIC_API_KEY: ${MINDLOGIC_API_KEY:-}
+    MINDLOGIC_BASE_URL: ${MINDLOGIC_BASE_URL:-https://factchat-cloud.mindlogic.ai/v1/gateway}
+    AI_MODEL: ${AI_MODEL:-gpt-5.6-luna}
+    AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+    PROCESSING_MAX_ATTEMPTS: ${PROCESSING_MAX_ATTEMPTS:-3}
+
+x-runtime-dependencies: &runtime-dependencies
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  migrate:
+    condition: service_completed_successfully
+
+services:
+  postgres:
+    image: docs-postgres-vector:17-0.8.7
+    build: ./infra/postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-workspace}
+      POSTGRES_DB: ${POSTGRES_DB:-workspace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.backend.production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    <<: *backend
+    build:
+      context: ./backend
+      target: production
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:${PORT:-8000}"
+    depends_on: *runtime-dependencies
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT', '8000') + '/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.processing.worker:celery", "worker", "--loglevel=INFO", "--concurrency=1"]
+    mem_limit: 1g
+    depends_on: *runtime-dependencies
+
+  dispatcher:
+    <<: *backend
+    command: ["python", "-m", "app.processing.dispatcher"]
+    depends_on: *runtime-dependencies
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,240 @@
+{
+  "mock": true,
+  "as_of": "2026-10-24",
+  "dataset_folder": "하루랩_스타트업_샘플",
+  "file_count": 39,
+  "visible_file_count": 38,
+  "category_folders": 9,
+  "all_subfolders": 12,
+  "formats": {
+    ".csv": 4,
+    ".docx": 2,
+    ".eml": 1,
+    ".hwpx": 1,
+    ".json": 3,
+    ".md": 18,
+    ".pdf": 2,
+    ".png": 3,
+    ".svg": 1,
+    ".txt": 3,
+    ".xlsx": 1
+  },
+  "files": [
+    {
+      "path": "00_자료안내.md",
+      "bytes": 1232,
+      "sha256": "edc374cc9374563cb862601cf6a8de2bc2488f05787d94b5524b1b02b17a0e6c"
+    },
+    {
+      "path": "01_회사소개/회사소개.pdf",
+      "bytes": 52641,
+      "sha256": "4005575a539b2fb0918e72648bef551aae734152f96a39d65b16f4da2c73d0b4"
+    },
+    {
+      "path": "01_회사소개/회사와팀.md",
+      "bytes": 1749,
+      "sha256": "e67ff608cf00280de8b1d66bf485471ab8c432f2ed4b9540d31c5894b650a009"
+    },
+    {
+      "path": "02_제품기획/API명세.json",
+      "bytes": 1016,
+      "sha256": "fbc88aee4fd7fc16a48756d5976775c7451c9bb3efbc4208ff552a1d057d3a17"
+    },
+    {
+      "path": "02_제품기획/데이터사전.md",
+      "bytes": 1126,
+      "sha256": "5089b8b9691109fea31fec168a32632933d22711d2cc216852298a8b7a1ff565"
+    },
+    {
+      "path": "02_제품기획/제품요구사항_v1.2.md",
+      "bytes": 2142,
+      "sha256": "65517ffcba1467a5059788283167eeb18c819927abb1d8cff264bce37d078712"
+    },
+    {
+      "path": "02_제품기획/출시체크리스트.csv",
+      "bytes": 665,
+      "sha256": "1e067eceff0678aebf0fbd9610dbf23e06349cc880b99bcac034fc240b741fa2"
+    },
+    {
+      "path": "02_제품기획/화면설계_모바일재고.png",
+      "bytes": 47264,
+      "sha256": "4987f15801c96c8310fd1eb2c1318d083d7b114900d31e51a9d47ecb0f4aa896"
+    },
+    {
+      "path": "02_제품기획/화면설계_발주대시보드.png",
+      "bytes": 117552,
+      "sha256": "927678c32d27cca22cb3819976169bdc2f0243ce4afb2489845a093bbe09ce96"
+    },
+    {
+      "path": "03_회의록/2026-10-16_제품우선순위.md",
+      "bytes": 958,
+      "sha256": "3bb0b95313956a29b8d1d2e88948af573b3e9c0d59e597c5074b264628e8fe1b"
+    },
+    {
+      "path": "03_회의록/2026-10-21_요금제확정.md",
+      "bytes": 1078,
+      "sha256": "d372e266891df5240ae48df4d42ab8e28642a66db5500660b46d72d20ec1d1ea"
+    },
+    {
+      "path": "03_회의록/2026-10-23_출시점검.md",
+      "bytes": 955,
+      "sha256": "60af1d5c87e28d6b41cbb6ea6f43c6f6e3097d71e919b85459664fe9aaa034f1"
+    },
+    {
+      "path": "03_회의록/회의록.md",
+      "bytes": 362,
+      "sha256": "4cb5e27b8496309ba3e8558cd2a88ace7b7bf7ed439ff684768d8f3a95fe3d0e"
+    },
+    {
+      "path": "04_고객영업/고객목록.csv",
+      "bytes": 1143,
+      "sha256": "a62fa41c79183bfab2b2ba3dc6746e205a4a43e51263736c6a35ce7bf964ef17"
+    },
+    {
+      "path": "04_고객영업/고객인터뷰_샘플카페03.md",
+      "bytes": 1257,
+      "sha256": "236fb4ee759a3c995a0999ab8d1ee4652918e937f2be282e584ac2612dcd689c"
+    },
+    {
+      "path": "04_고객영업/고객피드백.csv",
+      "bytes": 884,
+      "sha256": "ca2ab3d1a648309aaf9af3f9b90d7ec955c25f9f4e03403309f7e12cb4208775"
+    },
+    {
+      "path": "04_고객영업/도입문의_샘플카페09.eml",
+      "bytes": 492,
+      "sha256": "d34ccd037cf304c39e378fdfe519a103c5900674a55a30cab80b744cdba6ed7a"
+    },
+    {
+      "path": "04_고객영업/도입제안서_샘플카페09.docx",
+      "bytes": 39637,
+      "sha256": "898b825611ee874249e050aa9faddc8f798ea8fa775f0bf610c57e7d5eeef39b"
+    },
+    {
+      "path": "04_고객영업/도입제안서_샘플카페09.pdf",
+      "bytes": 153512,
+      "sha256": "4e586f8e82ef339888e73d397beb85f95e3d81f8f51721a109a9ffc38cda38f5"
+    },
+    {
+      "path": "04_고객영업/자주묻는질문.md",
+      "bytes": 1033,
+      "sha256": "bbc8b4ebbe362d7c1abbe514c19f8e1b300e9d274562fbe22d93a750aa76959e"
+    },
+    {
+      "path": "05_운영재무/운영예산_2026Q4.xlsx",
+      "bytes": 7489,
+      "sha256": "4ed246df468d575a851c6acb7a93684da3b57907ef7362891800aff499688e85"
+    },
+    {
+      "path": "05_운영재무/주간업무보고_2026-10-23.docx",
+      "bytes": 39489,
+      "sha256": "3e382cd81e59e2c2ad988333db693e40ecdb3cdf835d6d85e9de33b07e56d3c4"
+    },
+    {
+      "path": "05_운영재무/주간업무보고_2026-10-23.hwpx",
+      "bytes": 9102,
+      "sha256": "c4c75949fed899fa2accf3c2078b474d8f42e521333c20870d3dfbcb456be9e1"
+    },
+    {
+      "path": "05_운영재무/지출계획_2026-10.csv",
+      "bytes": 463,
+      "sha256": "e8c6f79cbb375136038b1ce002b1b9bdd7dcaa387e77dc15f76176243c52874e"
+    },
+    {
+      "path": "05_운영재무/회의록.md",
+      "bytes": 402,
+      "sha256": "d36f5a6a7ba8c3b23f61a5cf1142339e093a2328d552945e3aec5b7b4fe0ba19"
+    },
+    {
+      "path": "06_개발운영/릴리스노트_v0.8.0.md",
+      "bytes": 617,
+      "sha256": "8f3e8c7606c4075b5500640f622ab00c77a50b76a7fc1af4de7adfc06d71b7af"
+    },
+    {
+      "path": "06_개발운영/장애기록_재고반영지연.md",
+      "bytes": 1192,
+      "sha256": "f088401cc55792c3c647789954989ed999a1d39996fa5f01ab6f6b9518f0c27d"
+    },
+    {
+      "path": "06_개발운영/제품구조.png",
+      "bytes": 91862,
+      "sha256": "571c2f1b156bf21bc192f8aa969278c6782a0410eb99c9f149fce3734cde06eb"
+    },
+    {
+      "path": "06_개발운영/지표정의.json",
+      "bytes": 765,
+      "sha256": "2da808f2e83ef7a1271cc65a9b5c1e383f3c19924b0ce78ad05d14be5ee2d3aa"
+    },
+    {
+      "path": "07_브랜드마케팅/모아오더_로고.svg",
+      "bytes": 704,
+      "sha256": "7b6616641b1ac2de4bada16a5c2a402383282aebe55360533ff8252bda73f97b"
+    },
+    {
+      "path": "07_브랜드마케팅/브랜드_가이드.md",
+      "bytes": 770,
+      "sha256": "90d08bf1743185ba691777a4f66105df89a8256464fe46affeb5e94a33203aff"
+    },
+    {
+      "path": "07_브랜드마케팅/출시안내문.md",
+      "bytes": 806,
+      "sha256": "7f6d06b6dbaea6d7b7889e961d0228866546fbbbdea51d25faabb81ee7997fb4"
+    },
+    {
+      "path": "90_이전자료/2026-10-09_출시계획_폐기.md",
+      "bytes": 303,
+      "sha256": "c9b1afe3df2aa74d28376cb9f557199ce04792c2b75d9b619aaa0235240cac48"
+    },
+    {
+      "path": "90_이전자료/요금제_v0.3_폐기.md",
+      "bytes": 411,
+      "sha256": "32f3e27590e0644f7d34138d3bc48a7f8a4dbb862161fc421c9039f4dab44817"
+    },
+    {
+      "path": "90_이전자료/제품요구사항_v1.0_구버전.md",
+      "bytes": 350,
+      "sha256": "106c936f14018ab3751bb45303239d6b812d645e4da398fc7b3fee4f3c88a847"
+    },
+    {
+      "path": "99_기능테스트/.숨김메타.json",
+      "bytes": 95,
+      "sha256": "3b94d365b14339d45075ff16235a12542497b4a1ee7e19467e0a4be7af1073b8"
+    },
+    {
+      "path": "99_기능테스트/빈문서.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "99_기능테스트/중첩/공백 있는 폴더/한글_日本語_English.txt",
+      "bytes": 115,
+      "sha256": "5a90a76c332a519920b50e66485d8ead11f8cfd09bc66b3ca7f5151ae00fe2f4"
+    },
+    {
+      "path": "99_기능테스트/한글 파일 이름과 공백을 포함한 아주 긴 자료명_시범매장 초기 설정 체크 메모_2026년10월24일.txt",
+      "bytes": 240,
+      "sha256": "a1036cb6391c2200f8cfbd774b01c40102886f199f0b59a16d96bf27b2fd24ea"
+    }
+  ],
+  "validation": {
+    "docx_pdf": "2 DOCX files rendered and visually reviewed; 2 one-page PDFs reviewed and Korean extraction verified",
+    "xlsx": "artifact tool formulas, zero price and customer-change sensitivity; LibreOffice native recalculation matched six expected values",
+    "hwpx": "python-hwpx 6.8.0 schema and ZIP/XML contents; Hancom native layout not verified",
+    "desktop": {
+      "status": "ready",
+      "entries": 50,
+      "files": 38,
+      "checks": [
+        "folder connection",
+        "recursive inventory",
+        "hidden exclusion",
+        "zero byte file",
+        "HWPX and XLSX cards",
+        "global filename search",
+        "real PNG thumbnail and preview",
+        "Korean Markdown preview"
+      ],
+      "originalsUntouched": true
+    }
+  }
+}
