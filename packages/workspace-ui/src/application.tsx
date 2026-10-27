@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from 'react';
 import { LuLayoutGrid, LuFiles, LuPencil, LuMessageCircle, LuSettings2, LuFolder, LuFolderPlus, LuCloud, LuHardDrive, LuPlus, LuSearch, LuRefreshCw, LuX, LuTrash2, LuPanelLeftClose, LuPanelLeftOpen, LuHouse } from 'react-icons/lu';
 import { WorkspaceHeader, WorkspaceNavigation, type WorkspaceNavItem } from '../shared/ui/workspace-navigation';
+import { SampleWorkspaceCard } from './sample-card';
 import '../assets/tokens.css';
 import '../shared/ui/workspace-navigation.css';
 import './application.css';
@@ -9,15 +10,15 @@ import './application-home.css';
 
 export type ApplicationSpace = { id: string; name: string; detail?: string; kind?: 'local' | 'cloud'; onOpen: () => void; onRemove?: () => void; removeLabel?: string };
 export type ApplicationNavigation = { logo: string; symbol: string; onHome: () => void; spaces: ApplicationSpace[]; activeId?: string; account: ReactNode; primary?: ReactNode; secondary?: ReactNode; loading?: boolean };
-export type ApplicationMenu = { canvas: () => void; documents: () => void; writing: () => void; chat: () => void; settings: () => void; active?: 'canvas' | 'documents' | 'writing'; chatOpen?: boolean; available: boolean; count?: number };
+export type ApplicationMenu = { canvas: () => void; documents: () => void; writing: () => void; chat: () => void; settings: () => void; active?: 'canvas' | 'documents' | 'writing'; chatOpen?: boolean; available: boolean; count?: number; preview?: boolean };
 export function ApplicationShell({ navigation, menu, children }: { navigation: ApplicationNavigation; menu: ApplicationMenu; children: ReactNode }) {
   const [compact, setCompact] = useState(false);
   const items: WorkspaceNavItem[] = [
     { id: 'canvas', label: '캔버스', icon: <LuLayoutGrid />, onClick: menu.canvas, active: menu.available && (!menu.active || menu.active === 'canvas'), count: menu.count, disabled: !menu.available },
     { id: 'documents', label: '문서 관리', icon: <LuFiles />, onClick: menu.documents, active: menu.active === 'documents', disabled: !menu.available },
-    { id: 'writing', label: 'AI 문서 작성', icon: <LuPencil />, onClick: menu.writing, active: menu.active === 'writing', disabled: !menu.available },
-    { id: 'chat', label: 'AI 채팅', icon: <LuMessageCircle />, onClick: menu.chat, selected: menu.chatOpen, expanded: menu.chatOpen, controls: 'workspace-chat', disabled: !menu.available },
-    { id: 'settings', label: 'AI 연결 설정', icon: <LuSettings2 />, onClick: menu.settings },
+    { id: 'writing', label: 'AI 문서 작성', icon: <LuPencil />, onClick: menu.writing, active: menu.active === 'writing', disabled: !menu.available || menu.preview },
+    { id: 'chat', label: 'AI 채팅', icon: <LuMessageCircle />, onClick: menu.chat, selected: menu.chatOpen, expanded: menu.chatOpen, controls: 'workspace-chat', disabled: !menu.available || menu.preview },
+    { id: 'settings', label: 'AI 연결 설정', icon: <LuSettings2 />, onClick: menu.settings, disabled: menu.preview },
   ];
   return <div className={`context-app desktop-shell${compact ? ' navigation-compact' : ''}`} data-application-shell="shared">
     <WorkspaceNavigation brand={<button className="brand application-brand" aria-label="ConText 홈" onClick={navigation.onHome}><img className="application-logo" src={navigation.logo} alt="ConText" /><img className="application-symbol" src={navigation.symbol} alt="" /></button>}
@@ -51,8 +52,9 @@ export function ApplicationToolbar({ name, directory = '', onHome, query = '', o
 export function ApplicationStatus({ message, location, children }: { message: string; location?: string; children?: ReactNode }) {
   return <footer className="statusbar"><span><i />{message}</span><span title={location}>{location || '같은 계정으로 웹과 데스크톱에서 이어서 작업하세요.'}</span><span>{children || '배치 자동 저장'}</span></footer>;
 }
-export function ApplicationHome({ spaces, busy, primary, secondary, children }: { spaces: ApplicationSpace[]; busy?: boolean; primary?: ReactNode; secondary?: ReactNode; children?: ReactNode }) {
+export function ApplicationHome({ spaces, busy, primary, secondary, children, onSample }: { spaces: ApplicationSpace[]; busy?: boolean; primary?: ReactNode; secondary?: ReactNode; children?: ReactNode; onSample?: () => void }) {
   return <section className="application-home"><div className="application-home-heading"><span className="eyebrow">FILES BECOME YOUR WORKSPACE</span><h1>나의 워크스페이스</h1><p>폴더와 문서를 연결하고, 같은 공간에서 생각을 이어가세요.</p><div className="application-home-actions">{primary}{secondary}</div></div>
+    {onSample && <SampleWorkspaceCard onOpen={onSample} />}
     {busy ? <p role="status">워크스페이스를 불러오는 중…</p> : spaces.length ? <ul className="application-space-grid">{spaces.map(item => <li key={item.id}><button onClick={item.onOpen}><span className="application-space-icon">{item.kind === 'cloud' ? <LuCloud /> : <LuHardDrive />}</span><h2>{item.name}</h2><small>{item.detail}</small><span className="muted">워크스페이스 열기</span></button>{item.onRemove && <button className="icon-button danger application-space-remove" aria-label={item.removeLabel || `${item.name} 워크스페이스 삭제`} onClick={item.onRemove}><LuTrash2 /></button>}</li>)}</ul> : <div className="application-home-empty"><div className="welcome-art"><div className="mini-paper"><LuFolder /></div><div className="mini-paper"><LuFolderPlus /></div></div><h2>첫 워크스페이스를 시작하세요</h2><p>파일과 아이디어를 한눈에 살펴보고 자유롭게 배치할 수 있습니다.</p></div>}
     {children}
   </section>;

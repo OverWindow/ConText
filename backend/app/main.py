@@ -11,6 +11,7 @@ from app.api.canvas import router as canvas_router
 from app.api.conversion import router as conversion_router
 from app.api.documents import router as document_router
 from app.api.intelligence import router as intelligence_router
+from app.api.operations import router as operations_router
 from app.api.processing import router as processing_router
 from app.api.rag import router as rag_router
 from app.api.routes import router
@@ -44,6 +45,7 @@ app.include_router(ai_router)
 app.include_router(desktop_auth_router)
 app.include_router(sync_router)
 app.include_router(unified_worker_router)
+app.include_router(operations_router)
 
 
 @app.middleware("http")

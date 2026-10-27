@@ -221,3 +221,5 @@
   .documentTwo:hover, .documentTwo[aria-pressed="true"] { transform: rotate(5deg); }
   .documentThree:hover, .documentThree[aria-pressed="true"] { transform: rotate(2deg); }
 }
+
+.sampleLink{display:inline-flex;align-items:center;gap:7px;color:var(--primary);font-size:14px;font-weight:600;text-decoration:none;margin-top:8px}.sampleLink:hover{text-decoration:underline}

@@ -41,6 +41,7 @@ export function LandingPage({ macDownloadUrl, windowsDownloadUrl }: { macDownloa
           <h1 id="hero-title">흩어진 문서가,<br /><span>하나의 맥락으로.</span></h1>
           <p className={styles.heroDescription}>문서를 연결하고, AI와 생각을 정리하는 워크스페이스.<br />자료를 찾는 순간부터 새로운 글을 쓰는 순간까지 함께해요.</p>
           <div className={styles.heroActions}><Link href="/workspaces" className={styles.primaryAction}>웹에서 시작하기 <LuArrowUpRight aria-hidden="true" /></Link><a href="#start" className={styles.secondaryAction}><LuArrowDownToLine aria-hidden="true" /> 데스크톱 다운로드</a></div>
+          <p><Link href="/preview" className={styles.sampleLink}>로그인 없이 하루랩 샘플 둘러보기 <LuArrowRight aria-hidden="true" /></Link></p>
         </div>
         <WorkspacePreview />
       </section>
@@ -67,14 +68,15 @@ export function LandingPage({ macDownloadUrl, windowsDownloadUrl }: { macDownloa
             </div>)}</div>
           </article>
         </div>
-        <p className={styles.futureNote}>계정 연동 · 기기 간 동기화 준비 중</p>
+        <p className={styles.futureNote}>같은 계정으로 웹과 데스크톱에서 이어서 작업하세요.</p>
       </section>
       <section className={styles.faq} aria-labelledby="faq-title">
         <div><h2 id="faq-title">시작하기 전에<br />궁금한 것들.</h2></div>
         <div className={styles.questions}>
+          <details><summary>샘플 자료가 내 워크스페이스에 저장되나요?<LuPlus aria-hidden="true" /></summary><p>하루랩 샘플은 로그인 없이 볼 수 있는 읽기 전용 프리뷰입니다. 개인 폴더나 클라우드에 샘플 파일을 생성하지 않아요. 내 자료로 작업하려면 나의 워크스페이스에서 시작하세요.</p></details>
           <details><summary>웹을 쓰려면 앱을 설치해야 하나요?<LuPlus aria-hidden="true" /></summary><p>설치하지 않아도 됩니다. ‘웹에서 시작하기’를 누르고 로그인하면 브라우저에서 ConText를 이용할 수 있어요.</p></details>
-          <details><summary>웹과 데스크톱의 문서는 자동으로 연결되나요?<LuPlus aria-hidden="true" /></summary><p>아직 자동으로 연결되지 않습니다. 현재 웹 워크스페이스와 데스크톱의 로컬 폴더는 각각 독립적으로 동작해요. 같은 계정으로 연결하고 기기 사이에서 동기화하는 기능은 추후 제공할 예정입니다.</p></details>
-          <details><summary>데스크톱에서 원본 파일이 바뀌나요?<LuPlus aria-hidden="true" /></summary><p>캔버스에서 파일을 배치해도 원본 파일의 위치나 내용은 바뀌지 않아요. 현재 데스크톱은 폴더 탐색, 파일 배치, 미리보기와 원본 열기를 지원합니다.</p></details>
+          <details><summary>웹과 데스크톱의 문서는 자동으로 연결되나요?<LuPlus aria-hidden="true" /></summary><p>데스크톱에서 폴더를 연결하고 클라우드 동기화를 시작하면, 같은 계정의 웹에서도 이어서 작업할 수 있어요. 연결한 공간의 변경은 기기 사이에 반영되며, 동시에 수정한 내용은 충돌 화면에서 확인할 수 있어요.</p></details>
+          <details><summary>데스크톱에서 원본 파일이 바뀌나요?<LuPlus aria-hidden="true" /></summary><p>캔버스의 배치만 바꾸면 원본 내용은 바뀌지 않아요. 파일 편집·이동이나 동기화 적용은 원본 파일에 반영될 수 있어요. 처음에는 읽기 전용 하루랩 샘플로 화면을 둘러볼 수 있습니다.</p></details>
         </div>
       </section>
     </main>

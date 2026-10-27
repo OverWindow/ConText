@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createHash } from 'node:crypto';
 import type { BlobReference } from '@context/contracts';
@@ -15,6 +15,10 @@ export class BlobStorage {
     });
   }
   private ready() { if (!this.config.bucket) throw new ApiError(503,'STORAGE_UNAVAILABLE','Private document storage is not configured'); }
+  async check() {
+    this.ready();
+    await this.client.send(new HeadBucketCommand({Bucket:this.config.bucket}), {abortSignal:AbortSignal.timeout(5000)});
+  }
   private checksum(blob: BlobReference) { return Buffer.from(blob.sha256,'hex').toString('base64'); }
   async prepare(blob: StoredBlob) {
     this.ready();

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { LuArrowUpRight, LuFolder, LuFolderPlus, LuLayoutGrid, LuUnplug, LuX } from 'react-icons/lu';
 import { fileSize } from '@context/workspace-ui/shared/ui/document-paper';
@@ -29,6 +29,7 @@ import { CloudControl, CloudWorkspacePicker } from './cloud-control';
 import { LocalDocumentLibrary } from './document-library';
 import '@context/workspace-ui/shared/ui/workspace-navigation.css';
 
+const SampleWorkspace = lazy(() => import('@context/workspace-ui/sample-workspace').then(value => ({ default: value.SampleWorkspace })));
 const api = window.contextDesktop;
 function PreviewPanel({ entry, close, error }: { entry: Entry; close: () => void; error: (text: string) => void }) {
   const [preview, setPreview] = useState<Preview>();
@@ -53,6 +54,7 @@ function PreviewPanel({ entry, close, error }: { entry: Entry; close: () => void
 }
 function App() {
   const [home, setHome] = useState(false);
+  const [sample, setSample] = useState(false);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const active = useRef<string | undefined>(undefined);
@@ -170,6 +172,7 @@ function App() {
   }
   const matchCount = snapshot?.entries.filter(entry => query ? entry.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) : entry.parent_path === directory).length || 0;
   const canvasCount = query ? matchCount : snapshot?.entries.length || 0;
+  if (sample) return <Suspense fallback={<div className="center-state"><p role="status">샘플 워크스페이스를 여는 중…</p></div>}><SampleWorkspace navigation={{ logo: brandLogo, symbol: brandSymbol, spaces: [], onHome: () => { setSample(false); setHome(true); }, account: <DesktopAccountControl /> }} /></Suspense>;
   const workspaceChrome = <>
       <ApplicationToolbar name={snapshot?.workspace.label || '나의 워크스페이스'} directory={directory} onHome={snapshot ? () => { void changeDirectory(''); } : undefined} query={query} onQuery={snapshot ? value => void changeQuery(value) : undefined} onRefresh={snapshot ? () => void action(async () => setSnapshot(await api.refresh(snapshot.workspace.id))) : undefined} onSettings={snapshot ? () => setSettings(!settings) : undefined} onCreate={snapshot ? () => setNewFile(true) : undefined} busy={busy} toolsRef={setCanvasToolbarHost} sync={snapshot && <CloudControl key={snapshot.workspace.id} workspaceId={snapshot.workspace.id} flush={async () => canvasFlush.current ? canvasFlush.current() : true} />} />
       {problem && <div className="notice error" role="alert">{problem}<button className="icon-button" aria-label="오류 닫기" onClick={() => setProblem('')}><LuX /></button></div>}
@@ -191,7 +194,7 @@ function App() {
           {!canvasCount && <div className="canvas-empty"><LuFolder /><h2>{query ? '일치하는 파일이 없습니다' : '이 폴더는 비어 있습니다'}</h2><p>{query ? '다른 파일 이름으로 검색해 보세요.' : '파일을 추가하면 이곳에 자동으로 나타납니다.'}</p></div>}
         </div>{chatRepository && <ChatPanelView key={snapshot.workspace.id} workspace={{ id: snapshot.workspace.id, name: snapshot.workspace.label, role: 'OWNER' }} repository={chatRepository} open={chatOpen} onClose={() => setChatOpen(false)} onRevealSources={sources => void revealSources(sources)} onOpenSource={openSource} onAISettings={() => setAISettings(true)} />}{selected && (selected.kind === 'file' && ['.txt', '.md', '.pdf', '.docx', '.hwpx'].includes(selected.extension) ? <LocalDocumentPreview entry={selected} initialVersionId={sourceReference?.version_id} initialBlockId={sourceReference?.locations[0]?.block_id} onClose={() => { setSelected(undefined); setSourceReference(undefined); }} onEdit={id => { setInitialDraftId(id); setWriting(true); }} onEditText={() => setTextEntry(selected)} /> : <PreviewPanel entry={selected} close={() => setSelected(undefined)} error={setProblem} />)}</div>
         <ApplicationStatus message={busy || snapshot.status === 'scanning' ? '파일을 확인하고 있습니다…' : snapshot.status === 'unavailable' ? '저장된 목록 표시 중' : '변경 사항 자동 반영'} location={snapshot.workspace.root}>{snapshot.indexing?.state === 'running' ? <><span>본문 준비 {snapshot.indexing.completed}/{snapshot.indexing.total}</span><button onClick={() => void action(() => api.cancelIndex(snapshot.workspace.id))}>본문 처리 중단</button></> : snapshot.indexing?.state === 'cancelled' ? <><span>본문 처리 중단됨</span><button onClick={() => void action(() => api.indexDocuments(snapshot.workspace.id))}>본문 처리 계속</button></> : snapshot.indexing?.failed ? `본문 처리 실패 ${snapshot.indexing.failed}개` : '배치 자동 저장'}</ApplicationStatus>
-      </> : <>{problem && <p className="notice error" role="alert">{problem}</p>}<ApplicationHome spaces={spaces} busy={busy && !workspaces.length} primary={workspaces.length ? connect : <button className="primary" disabled={busy} onClick={() => void action(async () => accept(await api.connect()))}><LuFolderPlus />첫 폴더 연결하기</button>} secondary={cloudPicker} /></>}
+      </> : <>{problem && <p className="notice error" role="alert">{problem}</p>}<ApplicationHome onSample={() => setSample(true)} spaces={spaces} busy={busy && !workspaces.length} primary={workspaces.length ? connect : <button className="primary" disabled={busy} onClick={() => void action(async () => accept(await api.connect()))}><LuFolderPlus />첫 폴더 연결하기</button>} secondary={cloudPicker} /></>}
     {writing && snapshot && draftRepository && <DraftStudio workspace={{ id: snapshot.workspace.id, name: snapshot.workspace.label, role: 'OWNER' }} repository={draftRepository} initialDraftId={initialDraftId} onAISettings={() => setAISettings(true)} onClose={() => setWriting(false)} />}
     {library && snapshot && <LocalDocumentLibrary workspaceId={snapshot.workspace.id} entries={snapshot.entries} disconnectedFiles={snapshot.disconnected_files} onClose={() => setLibrary(false)} onOpen={entry => entry.kind === 'directory' ? enter(entry) : inspect(entry)} onCreate={() => setNewFile(true)} />}
     {aiSettings && <AISettings repository={desktopAIRepository} onClose={() => setAISettings(false)} />}

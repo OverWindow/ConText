@@ -10,15 +10,22 @@ if not os.environ.get("TEST_DATABASE_URL", "").endswith("_test"):
     raise RuntimeError("Compute fixture requires a disposable test configuration")
 os.environ["INTERNAL_WORKER_TOKEN"] = "test-only-unified-worker-token"
 os.environ["INTERNAL_WORKER_ALLOWED_HOSTS"] = '["127.0.0.1"]'
+os.environ["LEGACY_WORKSPACE_API_ENABLED"] = "false"
+os.environ["WEB_BASE_URL"] = "http://localhost:3100"
+os.environ["UNIFIED_API_URL"] = "http://localhost:18003"
+os.environ["SUPABASE_URL"] = "https://auth.unit"
+os.environ["SUPABASE_PUBLISHABLE_KEY"] = "sb_publishable_synthetic"
 
 from fastapi import FastAPI, Header, HTTPException  # noqa: E402
 import jwt  # noqa: E402
 from moto.server import ThreadedMotoServer  # noqa: E402
 import uvicorn  # noqa: E402
 from app.api.unified_worker import router  # noqa: E402
+from app.api.operations import router as operations_router  # noqa: E402
 
 app = FastAPI()
 app.include_router(router)
+app.include_router(operations_router)
 ai_receipts = {}
 storage = ThreadedMotoServer(ip_address="0.0.0.0", port=15002, verbose=False)
 storage.start()

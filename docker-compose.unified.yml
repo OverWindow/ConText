@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
+      target: development
     environment:
       UNIFIED_DATABASE_URL: postgresql://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace}
       UNIFIED_HOST: 0.0.0.0

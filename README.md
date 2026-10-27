@@ -276,7 +276,7 @@ uvicorn app.main:app --reload
 | `.env.development` | 기존 통합 개발 Compose 설정 |
 | `.env.frontend.production.example` | 프론트 운영 이미지 검증용 템플릿. Vercel 변수 설정 참고 |
 | `.env.backend.production.example` | 백엔드 운영 이미지 검증용 템플릿. Railway 변수 설정 참고 |
-| `.env.frontend.production` / `.env.backend.production` | 두 운영 이미지를 로컬에서 개별 검증할 때 사용. Git 제외 |
+| `.env.frontend.production` / `.env.backend.production` | 운영 스택을 로컬에서 검증할 때 사용. Git 제외 |
 
 실제 환경 파일은 Git에 포함하지 않는다. 기존 `.env.production`은 보존하며 새 분리 구성에서 자동으로 읽지 않는다. 필요한 값을 프론트/백엔드 파일이나 각 플랫폼 환경 변수로 옮긴다. OS 환경 변수는 env 파일보다 우선한다.
 
@@ -289,7 +289,9 @@ docker compose --env-file .env.frontend.production -f docker-compose.frontend.pr
 docker compose --env-file .env.backend.production -f docker-compose.backend.prod.yml config --quiet
 ```
 
-`docker-compose.frontend.prod.yml`에는 프론트엔드만 있고, `docker-compose.backend.prod.yml`에는 API·worker·dispatcher·migrate·PostgreSQL·Redis만 있다. 두 파일은 독립적으로 실행하며 개발 Compose와 합치지 않는다. Vercel에는 `frontend/`를 직접 배포하고, Railway에는 `/backend`를 소스로 서비스별 역할을 지정한다. 기존 단일 서버용 운영 Compose와 Caddy 설정은 이 구성으로 대체했다.
+`docker-compose.frontend.prod.yml`에는 프론트엔드만 있고, `docker-compose.backend.prod.yml`에는 Node 동기화 API·Python 계정/처리 API·migrate·PostgreSQL·Redis가 있다. 통합 구성에서는 Node가 문서 처리 큐를 실행하며 예전 Celery worker·dispatcher는 별도로 배포하지 않는다. Vercel에는 `frontend/`와 외부 공통 패키지를 포함하고, Railway Python 서비스는 `/backend`, Node 서비스는 저장소 루트를 소스로 지정한다. 개발 Compose와 합치지 않는다.
+
+`node scripts/deploy/init.mjs`로 없는 비공개 설정만 생성하고, 실제 주소와 자격 증명을 입력한 뒤 `node scripts/deploy/check.mjs`로 검사한다. 배포 후에는 `node scripts/deploy/smoke.mjs`가 주소 전달·인증·CORS·DB/S3/Python 준비 상태를 읽기 전용으로 확인한다. Vercel 빌드는 동기화 API 주소 누락과 localhost 설정을 거절한다.
 
 로컬 백엔드 Compose에서 `DATABASE_URL`을 비우면 `POSTGRES_*`로 내부 DB URL을 만든다. Railway에서는 DB 서비스의 내부 URL을 명시한다. 기존 DB volume의 비밀번호는 환경 파일만 바꿔도 자동 변경되지 않는다. `NEXT_PUBLIC_*`는 production build에 포함되므로 변경하면 프론트 재빌드/재배포가 필요하다.
 

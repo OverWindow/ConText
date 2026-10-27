@@ -14,6 +14,8 @@ services:
         # Public API origin; the client appends /api.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL to the public backend origin}
         NEXT_PUBLIC_WORKSPACE_API_URL: ${NEXT_PUBLIC_WORKSPACE_API_URL:?Set NEXT_PUBLIC_WORKSPACE_API_URL to the public unified API origin}
+        CONTEXT_DEPLOYMENT_MODE: ${CONTEXT_DEPLOYMENT_MODE:-cloud}
+        APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN}
     environment:
       <<: *frontend-public-environment
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${FRONTEND_PORT:-3000}}

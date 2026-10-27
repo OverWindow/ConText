@@ -12,7 +12,7 @@ interface Job {id:string;workspace_id:string;requested_by:string;request_id:stri
 export class ProcessingService {
   private timer?:NodeJS.Timeout; private busy=false;
   constructor(private db:Database,private store:WorkspaceStore,private storage:BlobStorage,private config:ServerConfig) {}
-  start() { this.timer=setInterval(()=>void this.tick().catch(()=>{}),1500); this.timer.unref(); }
+  start(onError:(error:unknown)=>void=()=>{}) { this.timer=setInterval(()=>void this.tick().catch(onError),1500); this.timer.unref(); }
   stop() { if(this.timer)clearInterval(this.timer); }
   async request(actor:Actor,workspaceId:string,input:Record<string,unknown>) {
     const requestId=input.request_id?uuid(input.request_id,'request_id'):randomUUID();

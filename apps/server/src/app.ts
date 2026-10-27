@@ -10,6 +10,7 @@ import { WorkspaceStore } from './store.ts';
 import { BlobStorage, type StoredBlob } from './storage.ts';
 import { ProcessingService } from './processing.ts';
 import {searchEvidence} from './search.ts';
+import { Readiness } from './readiness.ts';
 
 declare module 'fastify' {interface FastifyRequest {actor:Actor}}
 function params(request:FastifyRequest) {return request.params as Record<string,string>;}
@@ -43,6 +44,20 @@ export async function createServer(config:ServerConfig,options:{migrate?:boolean
     return reply.status(503).send({error:{code:'SERVICE_UNAVAILABLE',message:'Workspace service is unavailable'}});
   });
   app.get('/health',async()=>{await db.pool.query('SELECT 1');return {status:'ok',protocol:2};});
+  const readiness = new Readiness({
+    database: async () => { await db.transaction(async client => { await client.query("SET LOCAL statement_timeout = '5s'"); await client.query('SELECT 1'); }); },
+    storage: () => storage.check(),
+    processor: async () => {
+      if (!config.internalWorkerToken) throw new Error('Processor is not configured');
+      const response = await fetch(`${config.pythonUrl}/internal/v2/health`, {redirect:'error',signal:AbortSignal.timeout(5000),headers:{Authorization:`Bearer ${config.internalWorkerToken}`}});
+      const body = await response.json() as {status?:string;protocol?:number};
+      if (!response.ok || body.status !== 'ok' || body.protocol !== 2) throw new Error('Processor is not ready');
+    },
+  });
+  app.get('/ready',async(_request,reply)=>{
+    const result = await readiness.check();
+    return reply.code(result.status === 'ok' ? 200 : 503).send(result);
+  });
   app.get('/v2/me',async request=>request.actor);
   app.get('/v2/workspaces',async request=>{
     const result=await db.pool.query('SELECT w.metadata,m.role,w.cursor FROM unified.workspaces w JOIN unified.workspace_members m ON w.id=m.workspace_id WHERE m.user_id=$1 AND w.deleted_at IS NULL ORDER BY w.created_at,w.id',[request.actor.id]);
@@ -164,6 +179,6 @@ export async function createServer(config:ServerConfig,options:{migrate?:boolean
     await poll();if(!closed){timer=setInterval(()=>void poll(),3000);expiry=setTimeout(close,45000);timer.unref();expiry.unref();}
   });
   app.addHook('onClose',async()=>{processing.stop();storage.client.destroy();await db.close();});
-  if(options.worker)processing.start();
+  if(options.worker)processing.start(error=>app.log.error({code:error instanceof ApiError?error.code:'PROCESSOR_TICK_FAILED'},'Document processing loop failed'));
   return {app,db,store,storage,processing};
 }

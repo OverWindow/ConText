@@ -20,7 +20,8 @@
     "test:rag": "playwright test --config=playwright.rag.config.ts",
     "test:writing": "playwright test --config=playwright.writing.config.ts",
     "predev": "node scripts/patch-next-rsc-timing.mjs",
-    "test:rsc-timing": "node --test tests/rsc-timing.test.mjs"
+    "test:rsc-timing": "node --test tests/rsc-timing.test.mjs",
+    "prebuild": "node scripts/check-production-env.mjs"
   },
   "dependencies": {
     "@editorjs/editorjs": "2.31.7",

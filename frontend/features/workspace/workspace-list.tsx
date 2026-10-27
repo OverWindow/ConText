@@ -16,7 +16,7 @@ export function WorkspaceList() {
     catch (reason) { setError((reason as Error).message); setPending(false); }
   }
   return <ApplicationHomeShell navigation={app.navigation}>
-    <ApplicationHome spaces={app.navigation.spaces} busy={app.loading} primary={app.navigation.primary} secondary={app.navigation.secondary}>
+    <ApplicationHome onSample={() => router.push('/preview')} spaces={app.navigation.spaces} busy={app.loading} primary={app.navigation.primary} secondary={app.navigation.secondary}>
       {(error || app.error) && <p className="notice error" role="alert">{error || app.error}</p>}
       <section className="application-create-panel"><h2>워크스페이스 만들기</h2><form onSubmit={create}><label htmlFor="workspace-name">워크스페이스 이름</label><div className="form-row"><input id="workspace-name" value={name} onChange={event => setName(event.target.value)} required maxLength={120} placeholder="예: 프로덕트 팀" disabled={pending} /><button className="primary" disabled={pending || !name.trim() || app.loading}><LuPlus />{pending ? '만드는 중…' : '워크스페이스 만들기'}</button></div></form></section>
     </ApplicationHome>

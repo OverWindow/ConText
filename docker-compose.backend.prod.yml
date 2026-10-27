@@ -1,4 +1,4 @@
-# Independent backend image verification. Deploy API/worker/dispatcher separately on Railway.
+# Unified production stack. Railway deploys backend and unified-server separately.
 name: ${COMPOSE_PROJECT_NAME:-docs-backend-production}
 
 x-backend: &backend
@@ -13,7 +13,11 @@ x-backend: &backend
     SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
     SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
     CORS_ORIGINS: ${CORS_ORIGINS:?Set the frontend origin(s) as a JSON array}
-    WEB_BASE_URL: ${WEB_BASE_URL:-}
+    WEB_BASE_URL: ${WEB_BASE_URL:?Set the public web origin}
+    UNIFIED_API_URL: ${UNIFIED_API_URL:?Set the public unified API origin}
+    LEGACY_WORKSPACE_API_ENABLED: 'false'
+    INTERNAL_WORKER_TOKEN: ${INTERNAL_WORKER_TOKEN:?Set a private token shared by Node and Python}
+    INTERNAL_WORKER_ALLOWED_HOSTS: '[]'
     SYNC_MAX_WORKSPACE_BYTES: ${SYNC_MAX_WORKSPACE_BYTES:-2147483648}
     SYNC_SESSION_HOURS: ${SYNC_SESSION_HOURS:-24}
     AWS_REGION: ${AWS_REGION:-ap-northeast-2}
@@ -29,7 +33,7 @@ x-backend: &backend
     AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
     AI_CREDENTIALS_KEY: ${AI_CREDENTIALS_KEY:-}
     AI_DAILY_REQUEST_LIMIT: ${AI_DAILY_REQUEST_LIMIT:-100}
-    SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+    SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?Set the public Supabase key for desktop login}
     PROCESSING_MAX_ATTEMPTS: ${PROCESSING_MAX_ATTEMPTS:-3}
 
 x-runtime-dependencies: &runtime-dependencies
@@ -92,16 +96,44 @@ services:
       start_period: 15s
       retries: 10
 
-  worker:
-    <<: *backend
-    command: ["celery", "-A", "app.processing.worker:celery", "worker", "--loglevel=INFO", "--concurrency=1"]
-    mem_limit: 1g
-    depends_on: *runtime-dependencies
-
-  dispatcher:
-    <<: *backend
-    command: ["python", "-m", "app.processing.dispatcher"]
-    depends_on: *runtime-dependencies
+  unified-server:
+    image: ${UNIFIED_IMAGE:-context-unified-server}:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+      target: production
+    init: true
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8001
+      UNIFIED_HOST: 0.0.0.0
+      UNIFIED_DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace}}
+      SUPABASE_URL: ${SUPABASE_URL:?Set SUPABASE_URL}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set the web origin(s)}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:?Set a private S3 bucket}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      S3_PRESIGNED_URL_TTL: ${S3_PRESIGNED_URL_TTL:-600}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
+      SYNC_MAX_WORKSPACE_BYTES: ${SYNC_MAX_WORKSPACE_BYTES:-2147483648}
+      UNIFIED_PYTHON_URL: http://backend:${PORT:-8000}
+      INTERNAL_WORKER_TOKEN: ${INTERNAL_WORKER_TOKEN:?Set a private token shared by Node and Python}
+    ports:
+      - "127.0.0.1:${UNIFIED_PORT:-8001}:8001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 10
 
 volumes:
   postgres_data:

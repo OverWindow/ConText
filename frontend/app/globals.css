@@ -208,3 +208,5 @@ input:focus,select:focus,.search-box:focus-within,textarea:focus-visible{outline
 @media(max-width:760px){.chat-open.has-ai-references .canvas-dock-shell{display:none}}
 .workspace-main{transition:right 280ms cubic-bezier(.22,1,.36,1),bottom 280ms cubic-bezier(.22,1,.36,1)}
 .chat-panel{transition:transform 280ms cubic-bezier(.22,1,.36,1),opacity 280ms ease,top 280ms cubic-bezier(.22,1,.36,1)}
+
+.login-sample-link{display:inline-block;margin-top:18px;color:var(--primary);font-size:13px;text-decoration:underline;text-underline-offset:4px}
