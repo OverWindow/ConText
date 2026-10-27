@@ -88,6 +88,8 @@ Python `/api/desktop/auth/config`는 공개 Supabase 키·웹 주소·Node 주�
 
 Root Directory `frontend`, Framework `Next.js`, Node 24를 선택한다. **Include source files outside of the Root Directory in the Build Step**를 켜 공통 `packages/*`를 포함한다. `frontend/vercel.json`의 설치·빌드 명령을 사용한다. [Vercel 모노레포 설정](https://vercel.com/docs/monorepos/monorepo-faq).
 
+Install Command는 `npm ci --prefix .. && npm ci`로 저장소 루트와 frontend 의존성을 모두 설치한다. 공유 UI의 실제 소스는 `packages/workspace-ui`에 있으므로 frontend에서만 `npm ci`를 실행하면 `react-icons`, `@xyflow/react`, Editor.js를 찾지 못한다. Docker 빌드도 같은 순서로 두 위치에 설치한다. 설정 파일 변경은 배포 브랜치에 커밋·푸시한 뒤 새 커밋으로 배포해야 적용된다. 이전 커밋을 Redeploy하는 것만으로는 로컬 수정이 반영되지 않는다.
+
 ```dotenv
 APP_ORIGIN=https://<실제 웹 도메인>
 NEXT_PUBLIC_SUPABASE_URL=https://<프로젝트>.supabase.co
