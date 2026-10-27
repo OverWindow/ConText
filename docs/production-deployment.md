@@ -106,6 +106,7 @@ API 주소에는 `/api`나 `/v2`를 붙이지 않는다. 공개 키에 service-r
 
 - Supabase Site URL을 `APP_ORIGIN`, Redirect URLs를 해당 웹의 `/auth/callback`으로 설정한다.
 - Google OAuth provider callback은 Supabase가 제공하는 callback URI를 사용한다.
+- Google 로그인 뒤 웹 주소가 `/?code=...`이면 Supabase가 앱의 `/auth/callback` 대신 Site URL로 반환한 것이다. Redirect URLs에 실제 웹의 `/auth/callback`을 등록하고 새 로그인을 시작한다. 웹 홈은 이 경우에도 코드를 기존 콜백으로 전달해 세션 쿠키를 저장한 뒤 `/workspaces`로 이동한다. 코드 교환에 실패하면 홈에 남겨 두지 않고 로그인 오류를 표시한다. 코드를 채팅이나 로그에 복사하지 않는다.
 - S3에 `infra/s3/public-access-block.json`, `encryption.json`, `ownership.json`과 최소 IAM 정책 `iam-policy.example.json`을 버킷명에 맞춰 적용한다.
 - `infra/s3/cors.production.example.json`의 origin을 실제 웹으로 바꿔 적용한다. 새 동기화 업로드에 필요한 **`x-amz-meta-blob-id`**, checksum, encryption, `if-none-match` 헤더를 포함한다. 옛 version-id 헤더만 허용한 CORS를 그대로 쓰면 브라우저 업로드가 실패한다.
 - Node `/ready`의 `HeadBucket`에는 버킷 수준 `s3:ListBucket`이 필요하다. 기존 예시 IAM 정책에 포함되어 있다. 객체 접근은 `teams/*` 범위만 허용한다.

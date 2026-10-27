@@ -52,7 +52,7 @@ test('signed-in Login redirects into the workspace home on soft navigation', asy
   await signedIn(page);
   for (let attempt = 0; attempt < 3; attempt++) {
     await page.goto('/');
-    await page.getByRole('link', { name: /^로그인/ }).click();
+    await page.getByRole('link', { name: '로그인', exact: true }).click();
     await expect(page).toHaveURL(/\/workspaces$/);
     await expect(page.getByRole('heading', { name: '나의 워크스페이스', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: '계정 관리', exact: true })).toBeVisible();
