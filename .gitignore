@@ -19,3 +19,10 @@ test-results/
 .backups/
 apps/desktop/dist/
 apps/desktop/release/
+apps/desktop/core/
+apps/desktop/test-results-unified-IPC/
+apps/server/dist/
+apps/desktop/processor/dist/
+apps/desktop/processor/build/
+
+apps/desktop/test-results-summary-repeat/

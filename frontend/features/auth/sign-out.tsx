@@ -4,11 +4,12 @@ import { LuLogOut } from "react-icons/lu";
 import { useState } from "react";
 import { browserSupabase } from "@/lib/supabase/client";
 
-export function SignOut({ compact = false }: { compact?: boolean }) {
+export function SignOut({ compact = false, beforeSignOut }: { compact?: boolean; beforeSignOut?: () => Promise<boolean> }) {
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   async function signOut() {
     setPending(true);
+    if (beforeSignOut && !await beforeSignOut()) { setPending(false); return; }
     const { error } = await browserSupabase().auth.signOut({ scope: "local" });
     if (error) { setError(true); setPending(false); return; }
     window.location.assign("/login");

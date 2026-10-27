@@ -23,7 +23,11 @@ def document_for_user(db: Session, document_id: UUID, user_id: UUID) -> Document
     document = db.scalar(
         select(Document)
         .join(WorkspaceMember, WorkspaceMember.workspace_id == Document.workspace_id)
-        .where(Document.id == document_id, WorkspaceMember.user_id == user_id)
+        .join(Workspace, Workspace.id == Document.workspace_id)
+        .where(
+            Document.id == document_id, WorkspaceMember.user_id == user_id,
+            Workspace.deleted_at.is_(None), Document.deleted_at.is_(None),
+        )
         .options(selectinload(Document.versions))
     )
     if document is None:
@@ -38,7 +42,11 @@ def version_for_user(
         select(DocumentVersion, WorkspaceMember)
         .join(Document, Document.id == DocumentVersion.document_id)
         .join(WorkspaceMember, WorkspaceMember.workspace_id == Document.workspace_id)
-        .where(DocumentVersion.id == version_id, WorkspaceMember.user_id == user_id)
+        .join(Workspace, Workspace.id == Document.workspace_id)
+        .where(
+            DocumentVersion.id == version_id, WorkspaceMember.user_id == user_id,
+            Workspace.deleted_at.is_(None), Document.deleted_at.is_(None),
+        )
     )
     if lock:
         query = query.with_for_update(of=DocumentVersion).execution_options(populate_existing=True)

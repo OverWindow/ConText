@@ -1,0 +1,13 @@
+*
+!apps
+!apps/server
+!apps/server/**
+!packages
+!packages/contracts
+!packages/contracts/**
+!packages/domain
+!packages/domain/**
+**/node_modules
+**/.env*
+**/test-results*
+**/.DS_Store

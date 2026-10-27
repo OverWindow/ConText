@@ -18,7 +18,9 @@
     "test:intelligence": "playwright test --config=playwright.intelligence.config.ts",
     "test:conversion": "playwright test --config=playwright.conversion.config.ts",
     "test:rag": "playwright test --config=playwright.rag.config.ts",
-    "test:writing": "playwright test --config=playwright.writing.config.ts"
+    "test:writing": "playwright test --config=playwright.writing.config.ts",
+    "predev": "node scripts/patch-next-rsc-timing.mjs",
+    "test:rsc-timing": "node --test tests/rsc-timing.test.mjs"
   },
   "dependencies": {
     "@editorjs/editorjs": "2.31.7",
@@ -31,7 +33,12 @@
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-icons": "5.7.0"
+    "react-icons": "5.7.0",
+    "@context/contracts": "file:../packages/contracts",
+    "@context/domain": "file:../packages/domain",
+    "@context/sync-client": "file:../packages/sync-client",
+    "@context/workspace-client": "file:../packages/workspace-client",
+    "@context/workspace-ui": "file:../packages/workspace-ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

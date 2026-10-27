@@ -98,13 +98,13 @@ async function openTray(page: Page, mobile: boolean) {
   const toggle = card.getByRole('button', { name: '사업계획서 형식 변환', exact: true });
   const tray = card.getByRole('complementary', { name: '사업계획서 형식 변환 패널' });
   if (!mobile) {
-    await card.locator('.paper-glyph').hover();
+    await card.locator('.paper-sheet').hover();
     await expect(toggle).toHaveCSS('opacity', '1');
     await expect(tray).not.toBeVisible();
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await page.mouse.move(10, 10);
     await expect(toggle).toHaveCSS('opacity', '0');
-    await card.locator('.paper-glyph').hover();
+    await card.locator('.paper-sheet').hover();
   }
   await expect(toggle).toHaveCSS('opacity', '1');
   await page.screenshot({ path: `/tmp/canvas-conversion-launcher-${mobile ? 'mobile' : 'desktop'}.png` });
@@ -131,7 +131,7 @@ test('canvas hover or touch converts, shows version arrows, downloads and restor
   await expect(card.locator('.conversion-results')).toBeHidden();
   await page.screenshot({ path: `/tmp/context-conversion-summary-${info.project.name}.png` });
   if (isMobile) await card.locator('.conversion-summary').tap();
-  else await card.locator('.paper-glyph').hover();
+  else await card.locator('.paper-sheet').hover();
   const result = card.getByRole('button', { name: '수정 이력 2 PDF 파일 다운로드' });
   await expect(result).toBeVisible();
   await expect(card.locator('.conversion-results')).toHaveCSS('opacity', '1');
@@ -146,7 +146,7 @@ test('canvas hover or touch converts, shows version arrows, downloads and restor
   await page.reload();
   await expect(card.locator('.conversion-summary')).toBeVisible();
   if (isMobile) await card.locator('.conversion-summary').tap();
-  else await card.locator('.paper-glyph').hover();
+  else await card.locator('.paper-sheet').hover();
   await expect(page.getByRole('button', { name: '수정 이력 2 PDF 파일 다운로드' })).toBeVisible();
   await expect(card.locator('.conversion-results')).toHaveCSS('opacity', '1');
   await page.waitForTimeout(450);
@@ -181,7 +181,7 @@ test('canvas historical conversion retries, handles errors and keeps each versio
   await tray.getByRole('button', { name: '형식 변환 닫기' }).click();
   await page.getByRole('heading', { name: '전략 워크스페이스', exact: true }).click();
   if (isMobile) await card.locator('.conversion-summary').tap();
-  else await card.locator('.paper-glyph').hover();
+  else await card.locator('.paper-sheet').hover();
   await expect(card.getByRole('button', { name: '수정 이력 1 DOCX 파일 다운로드' })).toBeVisible();
   await expect(card.getByRole('button', { name: '수정 이력 2 PDF 파일 다운로드' })).toBeVisible();
   expect(state.requests).toEqual(['v1/docx', 'v1/docx', 'v2/pdf']);
@@ -214,6 +214,7 @@ test('copy action creates a separate file beside the original, opens its content
   let copied: typeof state.doc | null = null;
   let position = { x: 0, y: 0 };
   let requests = 0;
+  let saved: { document_id: string; x: number; y: number }[] = [];
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     if (path.endsWith('/documents/doc-main/copy')) {
@@ -224,12 +225,16 @@ test('copy action creates a separate file beside the original, opens its content
       position = { x: data.x, y: data.y };
       copied = { ...state.doc, id: 'doc-copy', title: '사업계획서 copy', current_version_id: 'copy-v1', versions: [{ ...state.doc.versions[1], id: 'copy-v1', document_id: 'doc-copy', version_number: 1, original_filename: '사업계획-2 copy.md' }] };
       await route.fulfill({ status: 201, json: { document: copied, ...position } });
+    } else if (path.endsWith('/canvas/positions')) {
+      saved = route.request().postDataJSON().positions;
+      const moved = saved.find(p => p.document_id === copied?.id); if (moved) position = moved;
+      await route.fulfill({ json: saved });
     } else if (copied && path.endsWith('/documents/doc-copy')) await route.fulfill({ json: copied });
-    else if (copied && path.endsWith('/canvas')) await route.fulfill({ json: { documents: [state.doc, copied], positions: [{ document_id: copied.id, ...position }], relations: [], conversions: [] } });
+    else if (copied && path.endsWith('/canvas')) await route.fulfill({ json: { documents: [state.doc, copied], positions: saved.length ? saved : [{ document_id: copied.id, ...position }], relations: [], conversions: [] } });
     else await route.fallback();
   });
   const original = page.locator('.react-flow__node[data-id="doc-main"]');
-  if (!isMobile) await original.locator('.paper-glyph').hover();
+  if (!isMobile) await original.locator('.paper-sheet').hover();
   await expect(original.locator(".document-copy-toggle")).toHaveCSS("opacity", "1");
   await page.screenshot({ path: `/tmp/context-copy-menu-${isMobile ? 'mobile' : 'desktop'}.png` });
   await original.getByRole('button', { name: '사업계획서 복사본 생성하기' }).click();
@@ -238,7 +243,7 @@ test('copy action creates a separate file beside the original, opens its content
   await expect(original.locator('.paper-caption')).toHaveText('사업계획-2.md');
   expect(requests).toBe(1);
   expect(position.x).not.toBe(0);
-  await copy.locator('.paper-glyph').click();
+  await copy.locator('.paper-sheet').click();
   await expect(page.getByRole('dialog', { name: '사업계획서 copy', exact: true })).toBeVisible();
   await expect(page.getByText('수정된 가격은 120원입니다.', { exact: true })).toBeVisible();
   await page.reload();
@@ -252,7 +257,7 @@ test('hover stays connected across the gap and both actions, with a forgiving ex
   const card = page.locator('.react-flow__node[data-id="doc-main"]');
   const convert = card.getByRole('button', { name: '사업계획서 형식 변환', exact: true });
   const copy = card.getByRole('button', { name: '사업계획서 복사본 생성하기' });
-  await card.locator('.paper-glyph').hover();
+  await card.locator('.paper-sheet').hover();
   await expect(convert).toHaveCSS('opacity', '1');
   const paper = (await card.locator('.paper-sheet').boundingBox())!;
   const zoom = paper.width / 200;
@@ -268,7 +273,7 @@ test('hover stays connected across the gap and both actions, with a forgiving ex
   await page.waitForTimeout(100);
   await expect(copy).toHaveCSS('opacity', '1');
   await expect(copy).toHaveCSS('opacity', '0');
-  await card.locator('.paper-glyph').hover();
+  await card.locator('.paper-sheet').hover();
   await convert.click();
   await expect(card.getByRole('complementary', { name: '사업계획서 형식 변환 패널' })).toBeVisible();
 });

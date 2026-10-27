@@ -297,14 +297,22 @@ docker compose --env-file .env.backend.production -f docker-compose.backend.prod
 
 Phase 8 문서 변환과 개발 환경 적용을 완료했다. 다음 계획은 Phase 9 AI-Native Workspace(워크스페이스 요약·문서 관계 제안·자동 정리·AI 문서 생성/편집·Knowledge Graph)다. 변환 품질 범위와 운영 한계는 Phase 8 사용 가이드에 정리했다.
 
-## 별도 데스크톱 앱
+## 웹과 같은 환경의 로컬 데스크톱 앱
 
-기존 웹과 함께 사용할 수 있는 로컬 전용 ConText Desktop을 `apps/desktop`에 추가했다. 폴더 연결, 하위 파일·이미지 캔버스, 파일 이름 검색, 변경 감지, 미리보기, 원본 열기, SQLite 배치 저장과 재실행 복원을 지원한다.
+`apps/desktop`은 웹과 주 메뉴·카드·캔버스 도구·문서 미리보기·이력/비교·편집기·채팅·AI 설정을 공유합니다. 로컬 하위 폴더는 축소하면 영역, 확대하면 내부 파일이 보이는 같은 캔버스로 탐색합니다. 본문 검색·버전·초안·5종 내보내기를 지원하며, 기본 파일 작업에는 Docker·로그인이 필요 없습니다. 왼쪽 아래에서 웹과 같은 Google 계정으로 선택 로그인할 수 있으며, 기본 API는 로컬 개발 서버입니다. 로그인·로그아웃 후에도 로컬 자료를 유지합니다. 카드 옆에서 5종 형식 변환 결과를 보관·저장하고 이미지 등 일반 파일의 실제 복사본을 만들 수 있습니다. 원본은 연결 폴더에 두고 앱 DB에 배치·초안·색인·버전 스냅샷을 보관합니다.
+
+현재 체크아웃에서는 독립 파서가 준비되어 있습니다.
 
 ```bash
-cd apps/desktop
-npm ci
-npm run dev
+npm run dev --prefix apps/desktop
 ```
 
-웹과 독립적으로 실행하며 Docker나 로그인이 필요 없다. 원본 파일은 그대로 두고 배치만 저장한다. 데스크톱 AI 작성·문서 본문 파싱·클라우드 동기화는 후속 단계다. 실행 파일·사용법은 [데스크톱 안내](apps/desktop/README.md), 개발 범위와 후속 계획은 [데스크톱 목표](docs/desktop-plan.md)를 참고한다.
+빌드된 macOS Apple Silicon 앱은 다음으로 실행합니다.
+
+```bash
+open "apps/desktop/release/mac-arm64/ConText Desktop.app"
+```
+
+AI는 서버를 통한 기본 ChatKHU 또는 개인 API 키의 직접 연결을 선택합니다. 실제 Google 계정 연결은 Supabase redirect 설정 후 별도 확인이 필요합니다. **클라우드 동기화**를 선택하면 연결 폴더의 파일·이력·폴더 구조·배치·메모·초안을 웹에서 열 수 있습니다. 중단·재시작·중복 전송을 처리하며 웹 원본 수정은 후속 양방향 범위입니다. [동기화 구조와 검증](docs/cloud-sync-implementation.md)을 참고합니다. 현재 앱은 서명·공증되지 않은 개발 빌드입니다.
+
+새 환경의 의존성/파서 준비, 연결·저장·복구·사용 범위는 [데스크톱 안내](apps/desktop/README.md)를 참고합니다. [전체 계획](docs/desktop-web-parity-plan.md), [진행 기록](docs/desktop-web-parity-progress.md), [실제 검증 결과](docs/desktop-web-parity-verification.md), [동기화 확장 계약](docs/local-sync-contract.md)에 현재 구현과 남은 검증을 구분했습니다.

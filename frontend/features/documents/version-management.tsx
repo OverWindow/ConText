@@ -1,34 +1,23 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { LuCheck, LuGitCompareArrows, LuLink, LuUpload, LuHistory, LuDownload } from "react-icons/lu";
+import { LuGitCompareArrows, LuLink, LuUpload } from "react-icons/lu";
 import { api } from "@/lib/api";
 import { message, statuses } from "@/lib/labels";
 import { completeUpload, downloadVersion, fileHash, sendFile, type DocumentVersion, type UploadTicket, type WorkspaceDocument } from "./api";
 import { ChangeIntelligence } from "./version-intelligence";
 import { DocumentReader } from "./document-reader";
+import { VersionTimelineView } from "../../shared/ui/version-timeline";
 export type Duplicate = { document_id: string; document_title: string; version: DocumentVersion };
 export const isVerified = (v: DocumentVersion) => !!v.uploaded_at || ["UPLOADED", "PROCESSING", "READY"].includes(v.status);
 export const registeredAt = (v: DocumentVersion) => v.created_at ? new Date(v.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "등록 시각 정보 없음";
 
 export function VersionTimeline({ document, editable, selectedId, onSelect, onChange }: { document: WorkspaceDocument; editable: boolean; selectedId: string; onSelect: (id: string) => void; onChange: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function action(version: DocumentVersion, kind: "current" | "complete" | "download") {
-    setBusy(true); setError("");
-    try {
-      if (kind === "current") await api(`/documents/${document.id}/current-version`, { method: "PATCH", body: JSON.stringify({ version_id: version.id }) });
-      else if (kind === "complete") await completeUpload(version.id);
-      else await downloadVersion(version.id);
-      onChange();
-    } catch (err) { setError(message(err)); } finally { setBusy(false); }
-  }
-  return <section aria-label="수정 이력 타임라인" className="version-timeline"><h3><LuHistory /> 수정 이력 <span className="badge">{document.versions.length}개</span></h3>{error && <p className="error" role="alert">{error}</p>}
-    <ol>{[...document.versions].reverse().map(v => <li key={v.id} className={selectedId === v.id ? "selected-version" : ""}>
-      <div className="timeline-marker">{v.version_number}</div><div className="timeline-entry"><button className="version-select" aria-label={`수정 이력 ${v.version_number} 미리보기`} onClick={() => onSelect(v.id)}><strong>수정 이력 {v.version_number}</strong>{document.current_version_id === v.id && <span className="current-badge"><LuCheck /> 현재 수정 이력</span>}<span>{v.original_filename}</span></button>
-        <p className="muted">{v.author_name || "팀원"} · {registeredAt(v)} · {statuses[v.status]}</p>{v.change_note && <p className="version-note">{v.change_note}</p>}{v.source_version_id && <p className="muted"><LuLink /> 다른 문서의 수정 이력에서 연결됨</p>}
-        <div className="document-actions">{isVerified(v) && <button className="secondary" disabled={busy} onClick={() => void action(v, "download")}><LuDownload /> 원본</button>}{editable && isVerified(v) && document.current_version_id !== v.id && <button className="secondary" aria-label={`수정 이력 ${v.version_number}을 현재 수정 이력으로 지정`} disabled={busy} onClick={() => void action(v, "current")}>현재 수정 이력으로 지정</button>}{editable && v.status === "UPLOADING" && <button className="secondary" disabled={busy} onClick={() => void action(v, "complete")}>업로드 완료 확인</button>}</div>
-      </div></li>)}</ol>
-  </section>;
+  return <VersionTimelineView versions={document.versions} currentId={document.current_version_id} selectedId={selectedId} editable={editable} onSelect={onSelect} onAction={async (version, kind) => {
+    if (kind === "current") await api(`/documents/${document.id}/current-version`, { method: "PATCH", body: JSON.stringify({ version_id: version.id }) });
+    else if (kind === "complete") await completeUpload(version.id);
+    else await downloadVersion(version.id);
+    onChange();
+  }} />;
 }
 
 export function VersionRegistration({ document, onChange }: { document: WorkspaceDocument; onChange: () => void }) {

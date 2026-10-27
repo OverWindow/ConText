@@ -104,6 +104,20 @@ def create(client, scene, **kwargs):
     return response.json()
 
 
+def test_blank_draft_requires_no_ai_and_retries_without_duplication(client, scene):
+    auth, wid, _, writer = scene
+    url = f"/api/workspaces/{wid}/writing/blank"
+    payload = {"request_id": str(uuid4())}
+    first = client.post(url, headers=auth, json=payload)
+    assert first.status_code == 201
+    draft = first.json()
+    assert draft["title"] == "새 문서" and draft["sources"] == []
+    assert draft["content"]["blocks"][0]["type"] == "paragraph"
+    assert client.post(url, headers=auth, json=payload).json() == draft
+    assert client.post(url, headers=headers(), json=payload).status_code == 404
+    assert writer.calls == []
+
+
 def test_discovery_persistence_retry_and_isolation(client, db, scene):
     auth, wid, user, writer = scene
     other = client.post("/api/workspaces", headers=auth, json={"name": "비공개"}).json()["id"]

@@ -15,6 +15,7 @@ async function prepare(page: Page, role = "OWNER", pending = false, failComplete
   let exists = pending || role === "VIEWER";
   let completionAttempts = 0;
   let uploaded = false;
+  let positions: { document_id: string; x: number; y: number }[] = [];
   await page.route("http://localhost:3102/api/**", async route => {
     const request = route.request();
     expect(request.headers().authorization).toBe(`Bearer ${token}`);
@@ -37,7 +38,11 @@ async function prepare(page: Page, role = "OWNER", pending = false, failComplete
     else if (path.endsWith("/duplicates")) response = [];
     else if (path.endsWith("/documents")) response = exists ? [document] : [];
     else if (path.includes("/api/documents/")) response = document;
-    else if (path.endsWith("/canvas")) response = { documents: exists ? [document] : [], positions: [], relations: [] };
+    else if (path.endsWith("/canvas/positions")) {
+      const changes = request.postDataJSON().positions as typeof positions;
+      positions = [...positions.filter(p => !changes.some(c => c.document_id === p.document_id)), ...changes]; response = changes;
+    }
+    else if (path.endsWith("/canvas")) response = { documents: exists ? [document] : [], positions, relations: [] };
     else response = { id: workspaceId, name: "Product documents", role };
     await route.fulfill({ json: response });
   });
@@ -55,7 +60,7 @@ async function prepare(page: Page, role = "OWNER", pending = false, failComplete
   if (await page.getByRole('button', { name: '메뉴 열기', exact: true }).isVisible()) await page.getByRole('button', { name: '메뉴 열기', exact: true }).click();
   await page.getByRole('button', { name: '문서 관리', exact: true }).click();
   await expect(page.getByRole('heading', { name: '문서 관리', exact: true })).toBeVisible();
-  return { uploaded: () => uploaded };
+  return { uploaded: () => uploaded, positions: () => positions };
 }
 
 test("writer uploads, verifies and downloads the original file", async ({ page }) => {
@@ -65,7 +70,9 @@ test("writer uploads, verifies and downloads the original file", async ({ page }
   await page.getByRole("button", { name: "문서 올리기", exact: true }).click();
   await expect(page.getByText("문서를 올렸습니다. 본문 처리가 시작됩니다.", { exact: true })).toBeVisible();
   expect(state.uploaded()).toBeTruthy();
-  await expect(page.getByText("처리 대기", { exact: true })).toBeVisible();
+  expect(state.positions()).toHaveLength(1);
+  expect(state.positions()[0].document_id).toBe("document-one");
+  await expect(page.getByRole("dialog").getByText("처리 대기", { exact: true })).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "다운로드", exact: true }).click();
   expect((await download).suggestedFilename()).toBe("notes.md");
@@ -73,12 +80,13 @@ test("writer uploads, verifies and downloads the original file", async ({ page }
 });
 
 test("failed completion can be checked without uploading again", async ({ page }) => {
-  await prepare(page, "EDITOR", false, true);
+  const state = await prepare(page, "EDITOR", false, true);
   await page.getByLabel("파일", { exact: true }).setInputFiles({ name: "notes.md", mimeType: "text/markdown", buffer: body });
   await page.getByRole("button", { name: "문서 올리기", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "서버에 연결하지 못했습니다" })).toBeVisible();
   await page.getByRole("button", { name: "업로드 확인" }).click();
   await expect(page.getByText("업로드를 확인했습니다.", { exact: true })).toBeVisible();
+  expect(state.positions()).toHaveLength(1);
   await expect(page.getByRole("button", { name: "다운로드", exact: true })).toBeVisible();
 });
 
@@ -100,6 +108,7 @@ test("retry requires the original file and reuses the pending version", async ({
   await page.getByRole("button", { name: "업로드 재시도", exact: true }).click();
   await expect(page.getByText("문서를 올렸습니다. 본문 처리가 시작됩니다.", { exact: true })).toBeVisible();
   expect(state.uploaded()).toBeTruthy();
+  expect(state.positions()).toHaveLength(0);
 });
 
 

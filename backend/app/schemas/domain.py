@@ -32,6 +32,8 @@ class WorkspaceRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     role: Role
+    sync_mode: str = "none"
+    sync_revision: int = 0
 
 
 class MemberAdd(BaseModel):

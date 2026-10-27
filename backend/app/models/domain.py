@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, UniqueConstraint, Uuid, func
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -62,6 +62,9 @@ class Workspace(Identity, Timestamps, Base):
     )
     name: Mapped[str] = mapped_column(String(120))
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    sync_mode: Mapped[str] = mapped_column(String(20), default="none", server_default="none")
+    sync_revision: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class WorkspaceMember(Identity, Base):

@@ -1,0 +1,351 @@
+[
+  {
+    "name": "parse",
+    "kind": "input",
+    "valid": true,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "export",
+    "kind": "input",
+    "valid": true,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "export",
+      "format": "docx",
+      "content": {
+        "title": "제목",
+        "blocks": [
+          {
+            "id": "block_1",
+            "type": "paragraph",
+            "text": "보존할 본문"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "parsed",
+    "kind": "result",
+    "valid": true,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "processor_fingerprint": "fixture:v2",
+      "status": "complete",
+      "normalized": {
+        "schema_version": 1,
+        "blocks": []
+      },
+      "text": "본문"
+    }
+  },
+  {
+    "name": "rendered",
+    "kind": "result",
+    "valid": true,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "processor_fingerprint": "fixture:v2",
+      "status": "complete",
+      "warnings": [],
+      "output": {
+        "content_base64": "YQ==",
+        "mime_type": "text/plain",
+        "filename": "a.txt"
+      }
+    }
+  },
+  {
+    "name": "failed",
+    "kind": "result",
+    "valid": true,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "processor_fingerprint": "fixture:v2",
+      "status": "failed",
+      "error": {
+        "code": "FAIL",
+        "message": "실패"
+      }
+    }
+  },
+  {
+    "name": "old-schema",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "absolute-name",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "../original.md"
+    }
+  },
+  {
+    "name": "newline-name",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md\n"
+    }
+  },
+  {
+    "name": "unknown-property",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md",
+      "private_path": "/tmp/local"
+    }
+  },
+  {
+    "name": "invalid-id",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "not-an-id",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "string-size",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": "1",
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "boolean-size",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size": true,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "bad-digest",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "parse",
+      "version": {
+        "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "document_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+        "blob": {
+          "id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+          "size": 1,
+          "mime_type": "text/plain"
+        }
+      },
+      "download_url": "https://storage.example.test/signed",
+      "filename": "notes.md"
+    }
+  },
+  {
+    "name": "long-cell",
+    "kind": "input",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "workspace_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "actor_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "kind": "export",
+      "format": "docx",
+      "content": {
+        "title": "제목",
+        "blocks": [
+          {
+            "id": "a",
+            "type": "table",
+            "rows": [
+              [
+                "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "malformed-base64",
+    "kind": "result",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "processor_fingerprint": "fixture:v2",
+      "status": "complete",
+      "warnings": [],
+      "output": {
+        "content_base64": "%%%",
+        "mime_type": "text/plain",
+        "filename": "a.txt"
+      }
+    }
+  },
+  {
+    "name": "truncated-base64",
+    "kind": "result",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "job_id": "9a5a55b9-bec5-4047-8f96-9f0e132bd6a8",
+      "processor_fingerprint": "fixture:v2",
+      "status": "complete",
+      "warnings": [],
+      "output": {
+        "content_base64": "YQ=",
+        "mime_type": "text/plain",
+        "filename": "a.txt"
+      }
+    }
+  }
+]

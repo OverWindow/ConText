@@ -1,17 +1,19 @@
-# Independent frontend image verification. Deploy frontend/ directly to Vercel.
+# Independent frontend image verification. Build from the monorepo root.
 name: ${COMPOSE_PROJECT_NAME:-docs-frontend-production}
 
 services:
   frontend:
     image: ${FRONTEND_IMAGE:-context-frontend}:${IMAGE_TAG:-local}
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
       target: production
       args: &frontend-public-environment
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?Set NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?Set NEXT_PUBLIC_SUPABASE_ANON_KEY}
         # Public API origin; the client appends /api.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL to the public backend origin}
+        NEXT_PUBLIC_WORKSPACE_API_URL: ${NEXT_PUBLIC_WORKSPACE_API_URL:?Set NEXT_PUBLIC_WORKSPACE_API_URL to the public unified API origin}
     environment:
       <<: *frontend-public-environment
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${FRONTEND_PORT:-3000}}

@@ -1,0 +1,469 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context.local/contracts/worker-v2.json",
+  "$defs": {
+    "WorkerBlob": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "minLength": 64,
+          "maxLength": 64
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 52428800
+        },
+        "mime_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "id",
+        "sha256",
+        "size",
+        "mime_type"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerVersion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "document_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "blob": {
+          "$ref": "#/$defs/WorkerBlob"
+        }
+      },
+      "required": [
+        "id",
+        "document_id",
+        "blob"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerWritingBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "paragraph",
+            "heading",
+            "list",
+            "table"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 12000,
+          "default": ""
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "default": 2
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "maxItems": 100,
+          "default": []
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "maxItems": 12
+          },
+          "maxItems": 100,
+          "default": []
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "default": []
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerWritingContent": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkerWritingBlock"
+          },
+          "minItems": 1,
+          "maxItems": 200
+        }
+      },
+      "required": [
+        "title",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "ProcessInput": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "type": "integer"
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "workspace_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "actor_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "parse",
+            "convert"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/WorkerVersion"
+        },
+        "download_url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^(?!\\.{1,2}$)(?![\\s\\S]*[\\x00\\r\\n])[^/\\\\]+$"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "docx",
+                "hwpx",
+                "pdf",
+                "txt",
+                "md"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "workspace_id",
+        "actor_id",
+        "kind",
+        "version",
+        "download_url",
+        "filename"
+      ],
+      "additionalProperties": false
+    },
+    "ExportInput": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "type": "integer"
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "workspace_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "actor_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "export"
+          ]
+        },
+        "content": {
+          "$ref": "#/$defs/WorkerWritingContent"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "maxItems": 100,
+          "default": []
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "docx",
+            "hwpx",
+            "pdf",
+            "txt",
+            "md"
+          ]
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^(?!\\.{1,2}$)(?![\\s\\S]*[\\x00\\r\\n])[^/\\\\]+$",
+          "default": "draft"
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "workspace_id",
+        "actor_id",
+        "kind",
+        "content",
+        "format"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerOutput": {
+      "type": "object",
+      "properties": {
+        "content_base64": {
+          "type": "string",
+          "maxLength": 73400320,
+          "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+          "format": "base64"
+        },
+        "mime_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": [
+        "content_base64",
+        "mime_type",
+        "filename"
+      ],
+      "additionalProperties": false
+    },
+    "ParsedResult": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "type": "integer"
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "processor_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "status": {
+          "const": "complete",
+          "type": "string"
+        },
+        "normalized": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2100000
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "processor_fingerprint",
+        "status",
+        "normalized",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "RenderedResult": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "type": "integer"
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "processor_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "status": {
+          "const": "complete",
+          "type": "string"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100
+        },
+        "output": {
+          "$ref": "#/$defs/WorkerOutput"
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "processor_fingerprint",
+        "status",
+        "warnings",
+        "output"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "FailedResult": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "type": "integer"
+        },
+        "job_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "processor_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "status": {
+          "const": "failed",
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/$defs/WorkerError"
+        }
+      },
+      "required": [
+        "schema_version",
+        "job_id",
+        "processor_fingerprint",
+        "status",
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerInput": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProcessInput"
+        },
+        {
+          "$ref": "#/$defs/ExportInput"
+        }
+      ]
+    },
+    "WorkerResult": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ParsedResult"
+        },
+        {
+          "$ref": "#/$defs/RenderedResult"
+        },
+        {
+          "$ref": "#/$defs/FailedResult"
+        }
+      ]
+    }
+  }
+}

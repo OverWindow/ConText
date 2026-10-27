@@ -231,9 +231,9 @@ test("full viewport mesh, Korean menus, actual members and search", async ({ pag
   const box = await page.locator('.canvas-surface').boundingBox();
   expect(box?.x).toBe(0); expect(box?.y).toBe(0);
   expect(box?.height).toBe(await page.evaluate(() => innerHeight));
-  await page.getByLabel('문서 검색').fill('Research');
+  await page.getByRole('textbox', { name: '문서 검색', exact: true }).fill('Research');
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
-  await page.getByLabel('문서 검색').clear();
+  await page.getByRole('textbox', { name: '문서 검색', exact: true }).clear();
   await page.screenshot({ path: `/tmp/phase4-overview-${testInfo.project.name}.png` });
   if (await page.getByRole('button', { name: '메뉴 열기', exact: true }).isVisible()) await page.getByRole('button', { name: '메뉴 열기', exact: true }).click();
   await expect(page.getByText('김지우', { exact: false })).toBeVisible();
@@ -295,9 +295,9 @@ test("reference labels can be hidden without deleting connections", async ({ pag
   await editCanvas(page);
   await connectCards(page);
   await expect(page.locator('.react-flow__edge-text')).toHaveText('참조');
-  await page.getByLabel('연결선 표시', { exact: true }).uncheck();
+  await page.getByRole('button', { name: '연결선 표시', exact: true }).click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
-  await page.getByLabel('연결선 표시', { exact: true }).check();
+  await page.getByRole('button', { name: '연결선 표시', exact: true }).click();
   await page.getByRole('button', { name: '캔버스 수정 완료' }).click();
   await page.getByRole('button', { name: '참조 표시 숨기기', exact: true }).click();
   await expect(page.locator('.react-flow__edge-text')).toHaveCount(0);
@@ -425,7 +425,7 @@ test("failed undo can retry and keyboard shortcuts leave text inputs alone", asy
   await expect(undo).toBeEnabled(); await undo.click();
   await expect.poll(() => state.positions().find(p => p.document_id === "doc-0")!.x).toBe(0);
   await expect(page.getByRole("button", { name: "다시 실행", exact: true })).toBeEnabled();
-  const search = page.getByLabel("문서 검색");
+  const search = page.getByRole("textbox", { name: "문서 검색", exact: true });
   await search.fill("Research"); await search.press("Control+Shift+z");
   expect(state.positions().find(p => p.document_id === "doc-0")!.x).toBe(0);
   await search.clear();

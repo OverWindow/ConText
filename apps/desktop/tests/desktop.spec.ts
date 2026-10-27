@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron, type ElectronApplication } from '@playwright/test';
-import { mkdtemp, mkdir, writeFile, rename, rm, stat, realpath } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rename, rm, stat, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -20,15 +20,15 @@ test('local folders, previews, watcher, persisted layout and isolated renderer',
     await page.getByRole('button', { name: '첫 폴더 연결하기' }).click();
     await expect(page.getByTestId('file-기획서.md')).toBeVisible();
     await expect(page.getByTestId('file-photo.png').locator('img')).toBeVisible();
-    await page.getByRole('button', { name: '기획서.md 미리보기' }).click();
-    await expect(page.locator('.preview-body pre')).toContainText('내 컴퓨터의 자료');
+    await page.getByTestId('file-기획서.md').locator('.paper-caption').dblclick();
+    await expect(page.locator('.preview-body')).toContainText('내 컴퓨터의 자료');
     await app.evaluate(({ shell }) => { (globalThis as any).__opened = []; shell.openPath = async filename => { (globalThis as any).__opened.push(filename); return ''; }; });
     await page.getByRole('button', { name: '원본 열기', exact: true }).click();
     await expect.poll(() => app!.evaluate(() => (globalThis as any).__opened)).toEqual([await realpath(path.join(root, '기획서.md'))]);
     await page.getByRole('button', { name: '미리보기 닫기' }).click();
-    await page.getByRole('button', { name: '참고 문서 폴더 열기' }).click();
+    await page.getByRole('button', { name: /참고 문서 폴더 (열기|펼치기)/ }).click();
     await expect(page.getByTestId('file-회의.txt')).toBeVisible();
-    await page.getByRole('button', { name: '상위 폴더' }).click();
+    await page.getByRole('button', { name: '작업 공간 전체 보기' }).click();
     await page.getByRole('textbox', { name: '파일 이름 검색' }).fill('회의');
     await expect(page.getByTestId('file-회의.txt')).toBeVisible();
     await page.getByRole('button', { name: '검색 지우기' }).click();
@@ -41,17 +41,23 @@ test('local folders, previews, watcher, persisted layout and isolated renderer',
     const node = page.locator('.react-flow__node').filter({ has: page.getByTestId('file-기획서.md') });
     const originalTransform = await node.getAttribute('style');
     const originalX = await page.evaluate(async () => { const api = (window as any).contextDesktop; const list = await api.list(); const snapshot = await api.snapshot(list[0].id); return snapshot.entries.find((item: any) => item.name === '기획서.md').x; });
-    const box = await page.getByTestId('file-기획서.md').locator('.paper-sheet').boundingBox();
+    await page.getByRole('button', { name: '캔버스 수정', exact: true }).click();
+    await expect(page.getByRole('button', { name: '캔버스 수정 완료', exact: true })).toBeVisible();
+    const paper = page.getByTestId('file-기획서.md').locator('.paper-sheet');
+    await paper.hover();
+    const box = await paper.boundingBox();
     if (!box) throw new Error('missing card');
-    await page.mouse.move(box.x + box.width / 2, box.y + 60); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + 110, box.y + 105, { steps: 12 }); await page.mouse.up();
+    await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + 110, box.y + box.height / 2 + 45, { steps: 12 }); await page.mouse.up();
     await expect(node).not.toHaveAttribute('style', originalTransform!);
     const persisted = await page.evaluate(async () => { const api = (window as any).contextDesktop; const list = await api.list(); return api.snapshot(list[0].id); });
     const moved = persisted.entries.find((item: any) => item.name === '기획서.md'); expect(moved.x).not.toBe(originalX);
-    await page.getByRole('button', { name: '참고 문서 폴더 열기' }).click();
-    await page.getByRole('button', { name: '상위 폴더' }).click();
-    await expect(node).toHaveAttribute('style', new RegExp(`translate\\(${moved.x}px`));
+    const movedCanvasX = await node.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m41);
+    try { await page.getByRole('button', { name: '참고 문서 폴더 펼치기', exact: true }).click({ timeout: 12000 }); }
+    catch (error) { await page.screenshot({ path: 'test-results/desktop-folder-failure.png' }); console.log(await page.locator('body').innerText()); console.log(errors); throw error; }
+    await page.getByRole('button', { name: '작업 공간 전체 보기' }).click();
+    await expect.poll(() => node.evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).m41)).toBeCloseTo(movedCanvasX, 2);
     if (await page.getByRole('button', { name: '미리보기 닫기' }).isVisible()) await page.getByRole('button', { name: '미리보기 닫기' }).click();
-    await page.getByRole('button', { name: 'zoom out' }).click();
+    await page.getByRole('button', { name: '축소', exact: true }).click();
     await page.screenshot({ path: 'test-results/desktop-canvas.png' });
     const state = await page.evaluate(() => ({ require: typeof (window as any).require, process: typeof (window as any).process }));
     expect(state).toEqual({ require: 'undefined', process: 'undefined' });
@@ -61,10 +67,114 @@ test('local folders, previews, watcher, persisted layout and isolated renderer',
     const restored = await page.evaluate(async () => { const api = (window as any).contextDesktop; const list = await api.list(); return api.snapshot(list[0].id); });
     expect(restored.entries.find((item: any) => item.name === '기획서.md').x).toBe(moved.x);
     expect(restored.views[0].zoom).toBeLessThan(.8);
-    await page.getByRole('button', { name: '폴더 설정' }).click();
+    await page.getByRole('button', { name: '워크스페이스 설정' }).click();
     await app.evaluate(({ dialog }) => { dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false }); });
     await page.getByRole('button', { name: '연결 해제', exact: true }).click();
     await expect(page.getByRole('button', { name: '첫 폴더 연결하기' })).toBeEnabled();
     expect((await stat(path.join(root, '기획서.md'))).isFile()).toBe(true);
+  } finally { if (app) await app.close(); await rm(base, { recursive: true, force: true }); }
+});
+
+
+test('workspaces are selected and disconnected only from home while originals are preserved', async () => {
+  const base = await mkdtemp(path.join(os.tmpdir(), 'context-folder-disconnect-e2e-'));
+  const first = path.join(base, '프로젝트 자료'), second = path.join(base, '별도 보관함');
+  await mkdir(first); await mkdir(second); await mkdir(path.join(first, '하위 폴더'));
+  await writeFile(path.join(first, '첫 자료.md'), '# 원본 A');
+  await writeFile(path.join(first, '하위 폴더', '내부.txt'), '하위 원본');
+  await writeFile(path.join(second, '둘째 자료.md'), '# 원본 B');
+  const executablePath = process.env.CONTEXT_DESKTOP_EXECUTABLE;
+  const launch = () => electron.launch({ executablePath, args: executablePath ? ['--user-data-dir=' + path.join(base, 'data')] : ['.'], cwd: process.cwd(), env: { ...process.env, CONTEXT_DESKTOP_DATA_DIR: path.join(base, 'data') } });
+  let app: ElectronApplication | undefined;
+  try {
+    app = await launch(); let page = await app.firstWindow();
+    const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+    await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, first);
+    await page.getByRole('button', { name: '첫 폴더 연결하기' }).click();
+    await expect(page.getByTestId('file-첫 자료.md')).toBeVisible();
+    await page.getByRole('button', { name: '나의 워크스페이스', exact: true }).click();
+    await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, second);
+    await page.getByRole('button', { name: '폴더 연결', exact: true }).click();
+    await expect(page.getByTestId('file-둘째 자료.md')).toBeVisible();
+    const sidebar = page.getByRole('complementary', { name: '주 메뉴', exact: true });
+    await expect(sidebar.getByRole('navigation', { name: '워크스페이스 목록', exact: true })).toHaveCount(0);
+    await expect(sidebar.getByRole('button', { name: '폴더 연결', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: '나의 워크스페이스', exact: true }).click();
+    const cards = page.locator('.application-space-grid');
+    const removeFirst = cards.getByRole('button', { name: '프로젝트 자료 폴더 전체 연결 해제', exact: true });
+    const removeSecond = cards.getByRole('button', { name: '별도 보관함 폴더 전체 연결 해제', exact: true });
+    await expect(removeFirst).toBeVisible(); await expect(removeSecond).toBeVisible();
+    await app.evaluate(({ dialog }) => {
+      (globalThis as any).folderDisconnectConfirmations = [];
+      dialog.showMessageBox = async (_window, options: any) => { (globalThis as any).folderDisconnectConfirmations.push(options); return { response: 0, checkboxChecked: false }; };
+    });
+    await removeFirst.click();
+    await expect.poll(() => app!.evaluate(() => (globalThis as any).folderDisconnectConfirmations.length)).toBe(1);
+    const confirmation = await app.evaluate(() => (globalThis as any).folderDisconnectConfirmations[0]);
+    expect(confirmation.message).toContain('프로젝트 자료'); expect(confirmation.message).not.toContain('별도 보관함');
+    expect(confirmation.detail).toContain('원본 폴더'); expect(confirmation.defaultId).toBe(0);
+    await app.evaluate(({ dialog }) => { dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false }); });
+    await removeFirst.click(); await expect(removeFirst).toHaveCount(0);
+    await expect(removeSecond).toBeVisible();
+    await cards.locator('li').filter({ has: page.getByRole('heading', { name: '별도 보관함', exact: true }) }).locator('button').first().click();
+    await expect(page.getByTestId('file-둘째 자료.md')).toBeVisible();
+    await page.getByRole('button', { name: '나의 워크스페이스', exact: true }).click();
+    await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, first);
+    await page.getByRole('button', { name: '폴더 연결', exact: true }).click();
+    await expect(page.getByTestId('file-첫 자료.md')).toBeVisible();
+    await page.getByRole('button', { name: '나의 워크스페이스', exact: true }).click();
+    await removeFirst.click(); await expect(removeFirst).toHaveCount(0);
+    await expect(page.locator('[data-application-home="shared"]')).toBeVisible();
+    await expect(page.getByTestId('file-둘째 자료.md')).toHaveCount(0);
+    await removeSecond.click();
+    await expect(cards).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '첫 폴더 연결하기' })).toBeEnabled();
+    await app.close(); app = await launch(); page = await app.firstWindow();
+    await expect(page.getByRole('button', { name: '첫 폴더 연결하기' })).toBeEnabled();
+    expect(await page.evaluate(() => window.contextDesktop.list())).toEqual([]);
+    expect(await readFile(path.join(first, '첫 자료.md'), 'utf8')).toBe('# 원본 A');
+    expect(await readFile(path.join(first, '하위 폴더', '내부.txt'), 'utf8')).toBe('하위 원본');
+    expect(await readFile(path.join(second, '둘째 자료.md'), 'utf8')).toBe('# 원본 B');
+    expect(errors).toEqual([]);
+  } finally { if (app) await app.close(); await rm(base, { recursive: true, force: true }); }
+});
+
+
+test('shared application shell keeps home, menu and sync controls aligned', async () => {
+  const base = await mkdtemp(path.join(os.tmpdir(), 'context-application-e2e-')), root = path.join(base, '통합 프로젝트');
+  await mkdir(root); await writeFile(path.join(root, '문서-00000.md'), '# 통합 화면'); await writeFile(path.join(root, '마지막 문서.md'), '# 같은 메뉴');
+  const executablePath = process.env.CONTEXT_DESKTOP_EXECUTABLE;
+  let app: ElectronApplication | undefined;
+  try {
+    app = await electron.launch({ executablePath, args: executablePath ? ['--user-data-dir=' + path.join(base, 'data')] : ['.'], cwd: process.cwd(), env: { ...process.env, CONTEXT_DESKTOP_DATA_DIR: path.join(base, 'data') } });
+    const page = await app.firstWindow();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(1280, 720));
+    await expect(page.getByRole('heading', { name: '나의 워크스페이스', exact: true }).first()).toBeVisible();
+    await expect(page.locator('[data-application-home="shared"]')).toBeVisible();
+    await expect(page.getByRole('navigation')).toHaveCount(0);
+    await expect(page.getByRole('complementary', { name: '주 메뉴' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '로그인', exact: true })).toBeVisible();
+    await page.screenshot({ path: 'test-results/application-desktop-home.png' });
+    await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, root);
+    await page.getByRole('button', { name: '첫 폴더 연결하기' }).click();
+    await expect(page.getByTestId('file-문서-00000.md')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: '워크스페이스 목록', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '폴더 연결', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '클라우드 워크스페이스 열기', exact: true })).toHaveCount(0);
+    expect(await page.getByRole('navigation', { name: '워크스페이스 메뉴', exact: true }).getByRole('button').evaluateAll(items => items.map(item => item.getAttribute('aria-label')))).toEqual(['캔버스', '문서 관리', 'AI 문서 작성', 'AI 채팅', 'AI 연결 설정']);
+    await expect(page.locator('[data-application-shell="shared"]>.context-navigation')).toHaveCSS('width', '242px');
+    await expect(page.locator('[data-application-shell="shared"]>.context-navigation')).toHaveCSS('border-radius', '0px');
+    await page.getByRole('button', { name: '로컬 저장', exact: true }).click();
+    await expect(page.getByRole('region', { name: '동기화 상태', exact: true })).toContainText('같은 계정의 웹과 데스크톱');
+    const setting = await page.getByRole('button', { name: '워크스페이스 설정', exact: true }).boundingBox(), sync = await page.locator('.cloud-control > button').boundingBox();
+    expect(setting && sync && sync.y >= setting.y + setting.height).toBe(true);
+    await page.screenshot({ path: 'test-results/application-desktop.png' });
+    await page.getByRole('button', { name: '로컬 저장', exact: true }).click();
+    await page.getByRole('button', { name: 'ConText 홈', exact: true }).click();
+    await expect(page.locator('.application-space-grid').getByRole('heading', { name: '통합 프로젝트', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation')).toHaveCount(0);
+    await expect(page.locator('.application-home-main')).toHaveCSS('width', '1280px');
+    await page.locator('.application-space-grid').getByRole('button').first().click();
+    await expect(page.getByTestId('file-문서-00000.md')).toBeVisible();
   } finally { if (app) await app.close(); await rm(base, { recursive: true, force: true }); }
 });

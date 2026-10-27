@@ -1,4 +1,6 @@
 @import "../design/tokens.css";
+@import "../shared/canvas/canvas.css";
+@import "../shared/ui/workspace-navigation.css";
 
 :root{--sidebar:242px}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--background);color:var(--ink);font-size:14px}button,input,select{font:inherit}button,a,input,select,summary{-webkit-tap-highlight-color:transparent}button,a{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}a{color:inherit;text-decoration:none}button{border:0}svg{flex-shrink:0;vertical-align:middle}button svg{font-size:18px}h1,h2,h3,h4,p{margin:0}h1{font-size:24px;letter-spacing:-.9px;line-height:1.4}h2{font-size:20px;letter-spacing:-.6px}h3{font-size:15px}small{font-size:11px}ul{list-style:none;padding:0;margin:0}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--primary-border);outline-offset:3px}input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--surface);color:var(--ink);min-width:0}input:focus,select:focus{outline:2px solid var(--primary-border);outline-offset:1px}label{display:block;font-size:12px;font-weight:600;margin:14px 0 7px}input[type=file]{font-size:12px;padding:10px}input[type=file]::file-selector-button{border:0;border-radius:6px;padding:7px 12px;background:var(--accent-light);color:var(--accent);margin-right:12px;cursor:pointer}
@@ -27,6 +29,8 @@
 .switch-label{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-secondary)}
 .switch-label input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
 .member-dialog{width:min(460px,calc(100% - 32px));margin:auto}
+.workspace-grid>li{position:relative;display:flex;flex-direction:column;min-width:0}.workspace-grid .workspace-card{flex:1}.workspace-delete-button{align-self:flex-end;background:var(--surface);font-size:12px;margin-top:6px;padding:7px 10px}.workspace-delete-form p{margin:0 0 14px;line-height:1.7;overflow-wrap:anywhere}.workspace-delete-form input{width:100%}.workspace-delete-form .document-actions{justify-content:flex-end;margin-top:18px}
+.workspace-delete-button,.workspace-delete-form button.danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--danger);background:var(--danger-soft);border:1px solid var(--danger-border);border-radius:8px;min-height:36px;padding:8px 12px}.workspace-delete-form button.danger:disabled{opacity:.45;cursor:not-allowed}
 .member-dialog .panel-scroll{padding:20px 26px 26px}
 .member-dialog .muted{margin:10px 0}.member-dialog .primary{margin-top:16px}
 .success-message{padding:12px;background:var(--success-soft);color:var(--success);border-radius:8px;font-size:12px;line-height:1.7;margin:12px 0}
@@ -44,12 +48,7 @@
 @media(max-width:760px){.preview-tabs{padding:8px 12px;gap:0}.preview-tabs button{padding:9px 7px;font-size:10px;gap:4px}.preview-tabs button svg{font-size:15px}.compare-columns{grid-template-columns:1fr}.compare-form{flex-wrap:wrap}.compare-form>div{flex-basis:42%}.compare-form>button{width:100%}.compare-dialog{width:calc(100% - 24px)}.timeline-entry{padding-right:0;padding-left:0}.version-mode button{font-size:11px;padding:10px}}
 
 /* Canvas annotations keep shapes below documents, even when selected. */
-.canvas-decoration{width:100%;height:100%;position:relative;min-width:0;min-height:0}.canvas-decoration>svg{width:100%;height:100%;display:block;overflow:visible}.canvas-decoration>svg>*{fill:var(--shape-fill);fill-opacity:.72;stroke:var(--shape-stroke);stroke-width:1.5;vector-effect:non-scaling-stroke}.decoration-text-content,.canvas-decoration textarea{width:100%;height:100%;padding:12px;margin:0;background:transparent;border:0;box-shadow:none;outline:none!important;color:var(--shape-ink);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4;text-align:left;font-family:inherit;font-weight:500;resize:none;overflow:auto;border-radius:0}.decoration-text-content{overflow:hidden}.decoration-text-content:empty{opacity:.6}.decoration-text.selected-decoration{background:#ffffff30}.decoration-grip{position:absolute;top:-25px;left:calc(50% - 18px);width:36px;height:23px;background:var(--surface);border:1px solid var(--primary-border);border-radius:6px 6px 0 0;display:grid;place-items:center;color:var(--primary);cursor:grab}.selected-decoration.decoration-text{background:#ffffff50}.canvas-decoration .react-flow__resize-control.handle{width:10px;height:10px;border-radius:3px}.canvas-drawing-tools{position:absolute;z-index:8;left:calc(50% + 100px);bottom:100px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:6px;background:var(--surface-overlay);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 24px var(--shadow-color)}.canvas-drawing-tools button{height:36px;min-width:38px;padding:0 10px;background:transparent;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;font-size:19px}.canvas-drawing-tools button:hover{background:var(--accent-light);color:var(--accent)}.canvas-drawing-tools button span{font-size:11px}.tool-divider{height:22px;width:1px;background:var(--line);margin:0 3px}.element-inspector{position:absolute;z-index:9;top:128px;right:24px;width:230px;padding:14px;background:var(--surface-overlay);border:1px solid var(--line);border-radius:15px;box-shadow:0 12px 32px var(--shadow-color);max-height:calc(100dvh - 265px);overflow:auto}.element-inspector-heading{display:flex;align-items:center;justify-content:space-between;font-size:13px}.element-colors{display:flex;gap:7px;margin:12px 0}.element-colors button{width:26px;height:26px;border-radius:50%;border:2px solid transparent}.element-dimensions{display:flex;gap:10px}.element-dimensions label{flex:1;min-width:0;font-size:11px}.element-dimensions input{min-width:0;padding:8px;font-size:12px}.element-font{font-size:11px}.element-font select{padding:8px;font-size:12px}.element-delete{color:var(--danger);margin-top:10px}.canvas-decoration textarea:focus{box-shadow:none}
-@media(max-width:760px){.canvas-drawing-tools{left:50%;bottom:94px}.element-inspector{top:116px;right:10px;width:180px;padding:10px;max-height:calc(100dvh - 240px)}.element-colors{gap:4px}.element-colors button{width:22px;height:22px}.element-inspector .muted{font-size:10px}.element-inspector-heading{font-size:12px}.canvas-decoration .react-flow__resize-control.handle{width:14px;height:14px}}
-.canvas-drawing-tools{width:max-content;max-width:calc(100vw - 24px)}.canvas-drawing-tools button{flex-shrink:0;white-space:nowrap}
-@media(max-width:760px){.element-inspector{left:10px;right:10px;top:118px;width:auto;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;max-height:230px}.element-inspector-heading,.element-colors{grid-column:1 / -1}.element-inspector .muted{display:none}.element-colors{margin:0}.element-dimensions{grid-column:1}.element-font{grid-column:2;margin:0}.element-delete{grid-column:2;justify-self:end;margin:0;padding:2px;min-height:24px}.decoration-grip{top:auto;bottom:-25px;border-radius:0 0 6px 6px}}
 
-.canvas-edit-toggle.active{background:var(--accent);color:var(--surface);box-shadow:0 2px 10px var(--action-shadow)}.is-browsing .react-flow__node-decoration.selected{outline:none}.canvas-edit-options{position:absolute;z-index:8;left:calc(50% + 100px);bottom:158px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-overlay);box-shadow:0 4px 18px var(--shadow-color);white-space:nowrap;font-size:11px;max-width:calc(100vw - 24px)}.canvas-edit-options>label{margin:0;font-size:11px}.canvas-edit-options select{width:auto;padding:6px 24px 6px 8px;margin:0;font-size:11px}.canvas-edit-options .connection-visibility{display:flex;align-items:center;gap:5px}.connection-visibility input{width:auto;margin:0}.canvas-edit-options small{font-size:10px;color:var(--muted)}.connection-options{position:fixed;z-index:30;width:260px;max-height:min(220px,calc(100dvh - 24px));overflow:auto;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px var(--shadow-elevated-color)}.connection-options-heading{display:flex;align-items:center;justify-content:space-between;font-size:12px}.connection-options>p{font-size:11px;line-height:1.7;overflow-wrap:anywhere;color:var(--muted);margin:6px 0 10px}.connection-options>p svg{vertical-align:middle}.connection-delete{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:10px;width:100%;background:var(--danger-soft);color:var(--danger);font-size:12px}.connection-delete:hover:not(:disabled){background:var(--danger-hover)}.connection-options .error{color:var(--danger);padding:8px}.is-editing .react-flow__edge{cursor:pointer}.is-editing .react-flow__edge.selected .react-flow__edge-path{stroke:var(--secondary-strong)!important;stroke-width:3!important}
 @media(max-width:1100px){.canvas-edit-options small{display:none}}
 @media(max-width:760px){.canvas-edit-options{left:50%;bottom:152px;gap:6px;padding:7px 9px}.canvas-title h1{max-width:calc(100vw - 250px)}.header-actions .canvas-edit-toggle{width:32px}}
 /* Version intelligence: textual labels accompany all change colors. */
@@ -195,52 +194,17 @@ input:focus,select:focus,.search-box:focus-within,textarea:focus-visible{outline
  .sidebar-compact .canvas-notices,.canvas-notices{top:166px}
 }
 
-.canvas-selection-area{position:absolute;inset:0;z-index:4;cursor:crosshair;touch-action:none;user-select:none}
-.canvas-selection-box{position:fixed;pointer-events:none;border:1.5px solid var(--primary);background:color-mix(in srgb,var(--primary) 12%,transparent);border-radius:8px}
-.react-flow__controls-button.canvas-area-select[aria-pressed=true]{background:var(--primary-soft);color:var(--primary-strong)}
-.canvas-selection-actions{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:8;width:320px;max-width:calc(100% - 100px);padding:12px;border:1px solid var(--primary-border);border-radius:16px;background:var(--surface);box-shadow:0 8px 30px var(--shadow-color)}
-.selection-status{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
-.selected-file-names{font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 0 10px}
-.canvas-selection-actions>.primary{width:100%;justify-content:center;font-size:12px}
-.canvas-selection-actions small{display:block;font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.5}
-.canvas-selection-actions .error{font-size:12px;margin-top:8px}
-@media(max-width:760px){.canvas-selection-actions{left:calc(50% + 32px);bottom:106px}}
 
-.react-flow__controls-button.canvas-area-select{margin-left:4px;border-left:1px solid var(--line)!important}
-.react-flow__controls-button.canvas-area-select svg{fill:none;width:17px;height:17px;max-width:none;max-height:none}
 
-.is-selecting .document-conversions > :not(.paper-sheet):not(.paper-caption){display:none!important}
 
-/* Semantic zoom keeps folder names readable while their files become an overview. */
-.canvas-folder.folder-overview>svg>*{fill-opacity:.92;stroke-width:2}
-.folder-label{transform:translateY(-100%);display:flex;align-items:center;gap:7px;width:var(--folder-label-width);max-height:var(--folder-label-height);overflow:hidden;padding:7px 10px;min-height:0;background:transparent;color:var(--text-muted);border:1px solid transparent;border-radius:0;box-shadow:none;font-size:12px;font-weight:500;line-height:1.3}
-.folder-label>svg{width:15px;height:15px;flex-shrink:0;opacity:.65}
-.folder-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-.folder-label input{min-width:0;flex:1;width:0;padding:0;margin:0;border:0;background:transparent;color:inherit;border-radius:0;font-size:12px;font-weight:500;line-height:1.3;box-shadow:none}
-.folder-count{font-size:10px;min-width:19px;padding:3px 5px;border-radius:6px;text-align:center;background:transparent;opacity:.65;flex-shrink:0}
-.folder-overview-open{transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;color:var(--shape-ink);padding:4px;border-radius:9px;font-size:10px;white-space:nowrap;width:var(--folder-label-width);max-height:var(--folder-label-height);overflow:hidden}
-.folder-overview-open>svg{height:27px;width:27px;fill:none;flex-shrink:0}
-.folder-overview-open .folder-name{display:block;flex:none;width:100%;font-size:15px;font-weight:750;line-height:1.4}
-.folder-overview-open>span{flex-shrink:0}
-.folder-overview-open:hover{background:var(--surface)}
-.element-folder-name{display:block;font-size:11px;margin-top:10px}
-.element-folder-name input{font-size:12px;padding:8px}
-@media(max-width:760px){.element-folder-name{grid-column:2;margin:0}}
 
-.folder-tiny .folder-overview-open>svg,.folder-tiny .folder-overview-open>span{display:none}
-.folder-tiny .folder-overview-open .folder-name{font-size:13px}
 
-.folder-narrow .folder-label>svg,.folder-narrow .folder-label .folder-count{display:none}
-.folder-narrow .folder-label{padding:5px;gap:0}
 
-.folder-label{width:max-content;max-width:var(--folder-label-width)}
-.folder-label:has(input){width:var(--folder-label-width)}
 
 /* The edit-mode frame is visual only and never intercepts canvas input. */
 .workspace-canvas::after{content:"";position:absolute;inset:2px;z-index:40;pointer-events:none;border:2px solid color-mix(in srgb,var(--primary) 70%,transparent);border-radius:16px;box-shadow:inset 0 0 20px color-mix(in srgb,var(--primary) 13%,transparent),0 0 8px color-mix(in srgb,var(--secondary) 12%,transparent);opacity:0;transition:opacity .2s ease}
 .workspace-canvas.has-edit-mode::after{opacity:1}
-.folder-drop-preview .canvas-folder>svg>*{stroke:var(--primary);stroke-width:2;stroke-dasharray:5 4;fill-opacity:.85}
-.react-flow__node.folder-animated:not(.folder-direct-manipulation){transition:width .24s cubic-bezier(.22,1,.36,1),height .24s cubic-bezier(.22,1,.36,1),transform .24s cubic-bezier(.22,1,.36,1)}
-.folder-title-overlay:not(:has(input)){transition:transform .24s cubic-bezier(.22,1,.36,1)}
-@media(prefers-reduced-motion:reduce){.react-flow__node.folder-animated,.folder-title-overlay{transition:none!important}}
 @media(prefers-reduced-motion:reduce){.workspace-canvas::after{transition:none}}
+@media(max-width:760px){.chat-open.has-ai-references .canvas-dock-shell{display:none}}
+.workspace-main{transition:right 280ms cubic-bezier(.22,1,.36,1),bottom 280ms cubic-bezier(.22,1,.36,1)}
+.chat-panel{transition:transform 280ms cubic-bezier(.22,1,.36,1),opacity 280ms ease,top 280ms cubic-bezier(.22,1,.36,1)}

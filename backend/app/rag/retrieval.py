@@ -27,7 +27,11 @@ def selected_versions(workspace_id, scope, as_of=None):
     query = (
         select(DocumentVersion.id)
         .join(Document, Document.id == DocumentVersion.document_id)
-        .where(Document.workspace_id == workspace_id, DocumentVersion.status == VersionStatus.READY)
+        .where(
+            Document.workspace_id == workspace_id,
+            Document.deleted_at.is_(None),
+            DocumentVersion.status == VersionStatus.READY,
+        )
     )
     if scope == "current":
         query = query.where(DocumentVersion.id == Document.current_version_id)
@@ -75,7 +79,7 @@ def index_status(db, workspace_id, scope="current", as_of=None):
     }
 
 
-def retrieve(db, workspace_id, question, scope="auto", as_of=None):
+def retrieve(db, workspace_id, question, scope="auto", as_of=None, ai=None):
     scope = resolve_scope(question, scope)
     status = index_status(db, workspace_id, scope, as_of)
     warnings = []
@@ -87,6 +91,7 @@ def retrieve(db, workspace_id, question, scope="auto", as_of=None):
         .join(Document, Document.id == DocumentVersion.document_id)
         .where(
             Document.workspace_id == workspace_id,
+            Document.deleted_at.is_(None),
             DocumentChunk.workspace_id == workspace_id,
             DocumentChunk.version_id.in_(selected_versions(workspace_id, scope, as_of)),
         )
@@ -94,7 +99,7 @@ def retrieve(db, workspace_id, question, scope="auto", as_of=None):
     ranked = []
     if status["indexed_chunks"]:
         try:
-            vector = AIService().embed(question[:3000])
+            vector = (ai or AIService()).embed(question[:3000])
             # CASE prevents dimension errors even if the optimizer reorders filters.
             distance = case(
                 (

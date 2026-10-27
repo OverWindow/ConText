@@ -1,0 +1,72 @@
+.document-conversions { position: relative; }
+:is(.react-flow__node-document,.react-flow__node-file):has(.conversion-open) { z-index: 40!important; }
+.conversion-toggle { position: absolute; top: 0; left: calc(100% + 14px); z-index: 2; width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid var(--primary-border); border-radius: 50%; color: var(--primary); background: var(--surface); box-shadow: 0 4px 12px var(--shadow-color); cursor: pointer; opacity: 0; pointer-events: none; transform: translateX(-8px) scale(.85); transition: opacity .16s ease, transform .2s ease, background .16s; }
+.conversion-toggle::before { content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 15px; }
+.conversion-hint .conversion-toggle, .conversion-toggle:focus-visible { opacity: 1; pointer-events: auto; transform: translateX(0) scale(1); }
+.conversion-toggle svg { width: 23px; height: 23px; }
+.conversion-toggle:hover { background: var(--primary-soft); }
+.conversion-open .conversion-toggle { opacity: 0; pointer-events: none; transform: scale(.9); }
+.conversion-toggle:focus-visible, .conversion-tray button:focus-visible, .converted-file:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.conversion-tray { position: absolute; left: calc(100% + 14px); top: 0; width: 240px; max-height: 440px; overflow: visible; padding: 15px; border: 1px solid var(--primary-border); border-radius: 17px; background: var(--surface); box-shadow: 0 12px 32px var(--shadow-color); opacity: 0; visibility: hidden; clip-path: inset(var(--conversion-origin-y, 0px) calc(100% - 48px) calc(100% - 48px - var(--conversion-origin-y, 0px)) 0 round 24px); transition: clip-path .24s cubic-bezier(.2,.8,.2,1), opacity .16s ease, visibility .24s; cursor: default; text-align: left; }
+.conversion-tray::before { content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 15px; }
+.conversion-open .conversion-tray { opacity: 1; visibility: visible; clip-path: inset(0 0 0 0 round 17px); }
+.conversion-tray-heading, .conversion-tray-body { opacity: 0; transition: opacity .12s ease; }
+.conversion-open .conversion-tray-heading, .conversion-open .conversion-tray-body { opacity: 1; transition-delay: .1s; }
+.conversion-tray-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.conversion-tray-heading>span { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 750; color: var(--text); }
+.conversion-tray-heading>span svg { color: var(--primary); width: 17px; height: 17px; }
+.conversion-tray-heading button { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 7px; background: var(--background); color: var(--text-muted); cursor: pointer; }
+.conversion-tray-body { max-height: 350px; overflow-y: auto; scrollbar-width: thin; }
+.conversion-source { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10px; font-weight: 600; color: var(--text-muted); }
+.conversion-source select { width: 127px; min-height: 29px; padding: 4px 7px; font-size: 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--background); color: var(--text); }
+.conversion-choices { display: grid; gap: 6px; margin: 12px 0; }
+.conversion-choice { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; text-align: left; color: var(--text); }
+.conversion-choice:hover:not(:disabled) { border-color: var(--conversion-color); background: var(--conversion-soft); }
+.conversion-choice:disabled, .converted-file:disabled { cursor: default; opacity: .6; }
+.conversion-choice>span:nth-child(2) { display: grid; gap: 3px; flex: 1; }
+.conversion-choice strong { font-size: 11px; font-weight: 700; }
+.conversion-choice small { font-size: 9px; color: var(--text-muted); }
+.conversion-choice>svg { width: 14px; height: 14px; color: var(--text-muted); }
+.conversion-pdf { --conversion-color: #D65D76; --conversion-soft: #FFF0F3; }
+.conversion-docx { --conversion-color: #4F80D7; --conversion-soft: #EDF3FF; }
+.conversion-txt { --conversion-color: #7285A9; --conversion-soft: #F0F3FA; }
+.conversion-md { --conversion-color: #8870E7; --conversion-soft: #F0ECFF; }
+.conversion-file-glyph { position: relative; flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 34px; border-radius: 5px; background: var(--conversion-soft); color: var(--conversion-color); font-size: 9px; font-weight: 800; clip-path: polygon(0 0, 70% 0, 100% 25%, 100% 100%, 0 100%); }
+.conversion-file-glyph::after { content: ""; position: absolute; top: 0; right: 0; width: 9px; height: 9px; border-radius: 0 0 0 3px; background: var(--conversion-color); opacity: .45; }
+.conversion-docx .conversion-file-glyph, .conversion-md .conversion-file-glyph { font-size: 14px; }
+.conversion-note { margin: 8px 0 0; font-size: 9px; line-height: 1.6; color: var(--text-muted); overflow-wrap: anywhere; }
+.conversion-error { margin: 8px 0 0; font-size: 10px; line-height: 1.5; color: var(--danger); overflow-wrap: anywhere; }
+.conversion-results { position: absolute; right: calc(100% + 14px); top: 0; width: 154px; max-height: 245px; padding: 3px 0; overflow-y: auto; scrollbar-width: thin; transition: opacity .15s; opacity: 0; visibility: hidden; pointer-events: none; }
+.conversion-results.is-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+.conversion-result { display: flex; flex-direction: row-reverse; align-items: center; margin-bottom: 7px; }
+.conversion-version-arrow svg { transform: rotate(180deg); }
+.conversion-summary { position: absolute; right: calc(100% + 8px); top: 12px; width: 76px; display: grid; gap: 3px; padding: 6px; border: 1px solid var(--primary-border); border-radius: 10px; color: var(--primary-strong); background: var(--primary-soft); cursor: pointer; font-size: 9px; text-align: center; }
+.conversion-summary[hidden] { display: none; }
+.conversion-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.conversion-summary small { font-size: 9px; color: var(--text-muted); }
+.conversion-summary::after { content: ""; position: absolute; left: 100%; top: 0; bottom: 0; width: 9px; }
+.document-conversions:has(.conversion-results.is-visible)::before { content: ""; position: absolute; right: 100%; top: 0; width: 15px; height: 245px; }
+.conversion-version-arrow { flex-shrink: 0; width: 43px; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--text-muted); }
+.conversion-version-arrow span { font-size: 9px; font-weight: 700; color: var(--primary-strong); }
+.conversion-version-arrow svg { width: 40px; height: 17px; stroke-width: 1.5; }
+.converted-file { width: 103px; display: flex; align-items: center; gap: 6px; padding: 7px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 3px 6px var(--shadow-color); color: var(--text); cursor: pointer; }
+.converted-file>span:nth-child(2) { font-size: 9px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.converted-file>svg { width: 11px; height: 11px; flex-shrink: 0; margin-left: auto; color: var(--text-muted); }
+.converted-file:hover { border-color: var(--conversion-color); background: var(--conversion-soft); }
+@media (hover: none) { .conversion-toggle { opacity: 1; pointer-events: auto; transform: none; } .conversion-open .conversion-toggle { opacity: 0; pointer-events: none; } }
+.conversion-interacting .conversion-toggle { opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .conversion-toggle, .conversion-tray, .conversion-results, .conversion-tray-heading, .conversion-tray-body { transition: none; transition-delay: 0s; } }
+
+.conversion-toggle-label { position: absolute; left: 100%; padding: 8px 10px; border-radius: 0 12px 12px 0; background: var(--surface); color: var(--primary-strong); white-space: nowrap; font-size: 12px; font-weight: 650; line-height: 18px; box-shadow: 5px 3px 10px var(--shadow-color); }
+
+.document-copy-toggle { top: 58px; }
+.document-copy-toggle:disabled { cursor: default; color: var(--text-muted); }
+.document-copy-toggle:disabled .conversion-toggle-label { color: var(--text-muted); }
+.document-copy-error { position: absolute; top: 112px; left: calc(100% + 14px); width: 210px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--danger); font-size: 11px; line-height: 1.6; z-index: 3; }
+
+.document-hover-bridge { position: absolute; left: calc(100% - 4px); top: -16px; width: 18px; height: 140px; z-index: 1; }
+
+.conversion-hwpx { --conversion-color: #4b9a93; --conversion-soft: #eaf8f5; }
+
+.document-conversions.copy-only .document-copy-toggle { top: 0; }
+.react-flow__node-file:has(.conversion-hint):not(:has(.conversion-open)) { z-index: 35!important; }

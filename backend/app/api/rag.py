@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai.connections import selected_service
 from app.auth.dependencies import require_workspace_member, require_workspace_role
 from app.db.session import get_db
 from app.models.documents import Document, DocumentVersion, VersionStatus
@@ -132,9 +133,15 @@ def search(
     db: Session = Depends(get_db),
 ):
     response.headers["Cache-Control"] = "no-store"
-    return retrieve(
-        db, workspace_id, data.question, data.scope, data.as_of.isoformat() if data.as_of else None
+    service = selected_service(db, member.user_id)
+    args = (
+        db,
+        workspace_id,
+        data.question,
+        data.scope,
+        data.as_of.isoformat() if data.as_of else None,
     )
+    return retrieve(*args, service) if service else retrieve(*args)
 
 
 @router.get("/chat/sessions")

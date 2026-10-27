@@ -1,0 +1,37 @@
+{
+  "name": "context-unified-workspace",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build:core": "npm run check:architecture && node scripts/build-unified-core.mjs",
+    "test:core": "npm run contracts:check && npm run build:core && node --test packages/contracts/tests/*.test.mjs packages/domain/tests/*.test.mjs packages/sync-client/tests/*.test.mjs",
+    "server:dev": "npm --prefix apps/server run dev",
+    "desktop:build": "npm --prefix apps/desktop run build",
+    "web:build": "npm --prefix frontend run build",
+    "contracts:generate": "node scripts/generate-worker-contracts.mjs",
+    "contracts:check": "node scripts/generate-worker-contracts.mjs --check",
+    "check:architecture": "node scripts/check-workspace-boundaries.mjs"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.12.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-icons": "5.7.0",
+    "@editorjs/editorjs": "2.31.7",
+    "@editorjs/header": "2.8.9",
+    "@editorjs/list": "2.0.9",
+    "@editorjs/table": "2.4.6"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.3"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

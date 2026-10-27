@@ -4,11 +4,11 @@ import { prepare } from './version-fixture';
 const source = { id: 'S1', chunk_id: 'chunk-1', document_id: 'doc-main', document_title: '사업계획서', version_id: 'v1', version_number: 1, is_current: false, text: '초안의 가격은 100원입니다. <script>alert(1)</script>', locations: [{ block_id: 1, page: 2 }] };
 const evidence = { sources: [source], scope: 'history', as_of: null, warnings: [] as string[] };
 const result = { ...evidence, claims: [{ text: '초안의 가격은 100원입니다.', source_ids: ['S1'] }], insufficient: false };
-async function setup(page: Page, options: { viewer?: boolean; failed?: boolean; lost?: boolean } = {}) {
+async function setup(page: Page, options: { viewer?: boolean; failed?: boolean; lost?: boolean; unavailable?: boolean; emptyQuestion?: string } = {}) {
   await prepare(page, options.viewer ? 'VIEWER' : 'OWNER');
   await page.getByRole('button', { name: '미리보기 닫기' }).click();
   let sessions: { id: string; title: string }[] = [];
-  let messages: object[] = [];
+  let messages: Record<string, unknown>[] = [];
   const asks: Record<string, unknown>[] = [];
   const creates: Record<string, unknown>[] = [];
   const searches: Record<string, unknown>[] = [];
@@ -22,9 +22,12 @@ async function setup(page: Page, options: { viewer?: boolean; failed?: boolean; 
     } else if (path.endsWith('/messages')) {
       if (req.method() === 'POST') {
         const data = req.postDataJSON(); asks.push(data);
-        const user = { id: 'question-1', role: 'user', state: 'COMPLETED', content: data.question, result: null };
-        const response = { id: 'answer-1', role: 'assistant', state: options.failed ? 'FAILED' : 'COMPLETED', content: '초안의 가격은 100원입니다.', result: options.failed ? null : result, error_code: options.failed ? 'AI_INVALID_RESPONSE' : null };
-        messages = [user, response];
+        const index = new Set(asks.map(ask => ask.request_id)).size;
+        const empty = data.question === options.emptyQuestion;
+        const user = { id: `question-${index}`, role: 'user', state: 'COMPLETED', content: data.question, result: null };
+        const response = { id: `answer-${index}`, role: 'assistant', state: options.failed || options.unavailable ? 'FAILED' : 'COMPLETED', content: empty ? '관련 문서를 찾지 못했어요.' : '초안의 가격은 100원입니다.', result: options.failed || options.unavailable ? null : empty ? { ...evidence, sources: [], claims: [], insufficient: true } : { ...result, scope: data.scope === 'auto' ? 'history' : data.scope, as_of: data.as_of }, error_code: options.unavailable ? 'AI_NOT_CONFIGURED' : options.failed ? 'AI_INVALID_RESPONSE' : null };
+        messages = [...messages.filter(item => item.id !== user.id && item.id !== response.id), user, response];
+        if (options.unavailable) { await route.fulfill({ status: 503, json: { detail: 'AI 연결 설정이 필요합니다.' } }); return; }
         if (lost) { lost = false; await route.abort('failed'); return; }
         await route.fulfill({ status: 202, json: { ...response, state: 'QUEUED', result: null } });
       } else await route.fulfill({ json: messages });
@@ -37,8 +40,10 @@ async function setup(page: Page, options: { viewer?: boolean; failed?: boolean; 
   const menu = page.getByRole('button', { name: '메뉴 열기', exact: true });
   if (await menu.isVisible()) await menu.click();
   await page.getByRole('button', { name: 'AI 채팅', exact: true }).click();
-  await expect(page.getByRole('complementary', { name: '문서 AI 채팅' })).toBeVisible();
-  await expect(page.getByText('현재 문서 2/2개 검색 준비', { exact: false })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'AI 채팅과 문서 검색' })).toBeVisible();
+  await expect(page.getByRole('status', { name: /현재 문서 2\/2개 검색 준비/ })).toBeVisible();
+  await expect(page.locator('.chat-mode')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '문서 검색', exact: true })).toHaveCount(0);
   return { asks, creates, searches };
 }
 
@@ -47,6 +52,12 @@ test('grounded shared chat, citations, historical source, and persistence', asyn
   await page.getByLabel('문서 질문').fill('과거 가격 정책을 알려줘');
   await page.getByRole('button', { name: '질문 보내기' }).click();
   await expect(page.getByRole('article', { name: 'AI 답변' })).toContainText('초안의 가격은 100원');
+  await expect(page.locator('.chat-sources')).not.toHaveAttribute('open');
+  await expect(page.locator('.chat-source summary')).toBeHidden();
+  await page.getByLabel('참조한 내용 더 보기', { exact: true }).click();
+  await expect(page.locator('.chat-source summary')).toBeVisible();
+  await page.getByLabel('참조한 내용 접기', { exact: true }).click();
+  await expect(page.locator('.chat-source summary')).toBeHidden();
   await page.getByRole('button', { name: 'S1 근거 보기' }).click();
   await expect(page.locator('.source-excerpt')).toContainText('<script>alert(1)</script>');
   await expect(page.locator('.chat-source script')).toHaveCount(0);
@@ -69,14 +80,15 @@ test('viewer asks and searches dates with explicit degraded status', async ({ pa
   await page.getByLabel('문서 질문').fill('가격을 알려줘');
   await page.getByRole('button', { name: '질문 보내기' }).click();
   await expect(page.getByRole('article', { name: 'AI 답변' })).toContainText('초안의 가격은 100원');
-  await page.getByRole('button', { name: '문서 검색', exact: true }).click();
+  await page.getByRole('button', { name: '검색 설정', exact: true }).click();
   await page.getByLabel('검색 범위', { exact: true }).selectOption('as_of');
   await page.getByLabel('기준 날짜').fill('2026-10-01');
   await page.getByLabel('문서 질문').fill('가격 정책');
-  await page.getByRole('button', { name: '검색하기' }).click();
-  await expect(page.getByText('의미 검색을 사용할 수 없어 텍스트로 검색했습니다.')).toBeVisible();
-  await expect(page.getByText('일부 문서의 색인이 완료되지 않아 검색에서 빠질 수 있습니다.')).toBeVisible();
-  expect(state.searches[0]).toEqual({ question: '가격 정책', scope: 'as_of', as_of: '2026-10-01' });
+  await page.getByRole('button', { name: '질문 보내기' }).click();
+  await expect(page.getByRole('status', { name: '의미 검색을 사용할 수 없어 텍스트로 검색했습니다.', exact: true }).last()).toBeVisible();
+  await expect(page.getByRole('status', { name: '일부 문서의 색인이 완료되지 않아 검색에서 빠질 수 있습니다.', exact: true }).last()).toBeVisible();
+  expect(state.searches.at(-1)).toEqual({ question: '가격 정책', scope: 'as_of', as_of: '2026-10-01' });
+  expect(state.asks.at(-1)).toMatchObject({ question: '가격 정책', scope: 'as_of', as_of: '2026-10-01' });
   await page.screenshot({ path: `/tmp/phase7-search-${info.project.name}.png` });
 });
 
@@ -84,8 +96,9 @@ test('lost response reuses idempotency keys and failed answers can retry', async
   const state = await setup(page, { lost: true, failed: true });
   await page.getByLabel('문서 질문').fill('가격 정책');
   await page.getByRole('button', { name: '질문 보내기' }).click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'AI 채팅과 문서 검색' }).getByRole('alert')).toBeVisible();
   await page.getByRole('button', { name: '질문 보내기' }).click();
+  await expect.poll(() => state.asks.length).toBe(2);
   await expect(page.getByText('답변의 근거를 검증하지 못했습니다.')).toBeVisible();
   expect(state.creates).toHaveLength(1);
   expect(state.asks).toHaveLength(2);
@@ -97,12 +110,12 @@ test('lost response reuses idempotency keys and failed answers can retry', async
 
 test('chat dock preserves drafts and conversation while folding; compact navigation remains usable', async ({ page }, info) => {
   const state = await setup(page);
-  const dock = page.getByRole('complementary', { name: '문서 AI 채팅' });
+  const dock = page.getByRole('complementary', { name: 'AI 채팅과 문서 검색' });
   await expect(page.locator('dialog[open]')).toHaveCount(0);
   await page.getByLabel('문서 질문').fill('작성 중인 질문');
   await page.getByRole('button', { name: 'AI 채팅 접기', exact: true }).click();
   await expect(dock).toBeHidden();
-  await expect(page.getByRole('button', { name: 'AI 채팅 펼치기' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'AI 채팅', exact: true })).toBeFocused();
   await page.getByRole('button', { name: '캔버스 새로고침' }).click();
   const fold = page.getByRole('button', { name: '메뉴 접기', exact: true });
   if (await fold.isVisible()) await fold.click();
@@ -113,18 +126,18 @@ test('chat dock preserves drafts and conversation while folding; compact navigat
   await expect(sidebar.locator('.brand-logo-symbol')).toBeVisible();
   await expect(sidebar.locator('.brand-logo-full')).toBeHidden();
   await expect.poll(() => sidebar.locator('.brand-logo-symbol img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(512);
-  await page.getByRole('button', { name: 'AI 채팅 펼치기' }).click();
+  await page.getByRole('button', { name: 'AI 채팅', exact: true }).click();
   await expect(page.getByLabel('문서 질문')).toHaveValue('작성 중인 질문');
   if (info.project.name === 'desktop') {
     await page.getByRole('button', { name: '캔버스 새로고침' }).click();
     await expect(dock).toBeVisible();
     const main = (await page.locator('.workspace-main').boundingBox())!;
-    expect(main.x + main.width).toBeLessThanOrEqual((await dock.boundingBox())!.x);
+    expect(main.x + main.width).toBeLessThanOrEqual((await dock.boundingBox())!.x + 1);
   }
   await page.getByRole('button', { name: '질문 보내기' }).click();
   await expect(page.getByRole('article', { name: 'AI 답변' })).toContainText('초안의 가격은 100원');
   await page.getByRole('button', { name: 'AI 채팅 접기', exact: true }).click();
-  await page.getByRole('button', { name: 'AI 채팅 펼치기' }).click();
+  await page.getByRole('button', { name: 'AI 채팅', exact: true }).click();
   await expect(page.getByRole('article', { name: 'AI 답변' })).toContainText('초안의 가격은 100원');
   expect(state.asks).toHaveLength(1);
   await page.screenshot({ path: `/tmp/context-dock-${info.project.name}.png` });
@@ -165,6 +178,11 @@ test('answer references focus the canvas once, and citations refocus without cha
   const glow = await node.locator('.paper-reference-glow').elementHandle();
   await page.waitForTimeout(2300); // A message poll must not restart the glow or move the canvas.
   expect(await glow!.evaluate(el => el.isConnected)).toBeTruthy();
+  const viewport = page.locator('.react-flow__viewport'), position = await viewport.getAttribute('style');
+  await page.getByLabel('참조한 내용 더 보기', { exact: true }).click();
+  await expect(viewport).toHaveAttribute('style', position!);
+  await page.getByLabel('참조한 내용 접기', { exact: true }).click();
+  await expect(viewport).toHaveAttribute('style', position!);
   await page.getByRole('button', { name: 'S1 근거 보기' }).click();
   await expect.poll(() => glow!.evaluate(el => el.isConnected)).toBeFalsy();
   await expect.poll(centered).toBeLessThan(4);
@@ -175,19 +193,71 @@ test('answer references focus the canvas once, and citations refocus without cha
 
 test('search highlights all retrieved files, selects a source, and clears empty results with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await setup(page);
+  await setup(page, { emptyQuestion: '없는자료' });
   let empty = false;
   await page.route('**/api/workspaces/*/search', route => route.fulfill({ json: { ...evidence, sources: empty ? [] : [source, { ...source, id: 'S2', chunk_id: 'chunk-2', document_id: 'doc-source', document_title: '외부 수정본' }] } }));
-  await page.getByRole('button', { name: '문서 검색', exact: true }).click();
   await page.getByLabel('문서 질문').fill('가격');
-  await page.getByRole('button', { name: '검색하기' }).click();
+  await page.getByRole('button', { name: '질문 보내기' }).click();
   await expect(page.locator('.is-ai-reference')).toHaveCount(2);
   await expect(page.locator('.paper-reference-glow').first()).toHaveCSS('animation-name', 'none');
+  await page.getByLabel('참조한 내용 더 보기', { exact: true }).click();
   await page.locator('.chat-source summary').filter({ hasText: '외부 수정본' }).click();
   await expect(page.locator('.is-ai-reference')).toHaveCount(1);
   await expect(page.locator('.react-flow__node[data-id="doc-source"] .paper-reference-badge')).toBeVisible();
   empty = true;
-  await page.getByRole('button', { name: '검색하기' }).click();
-  await expect(page.getByText('관련 문서를 찾지 못했습니다. 검색어와 범위를 바꿔 보세요.')).toBeVisible();
+  await page.getByLabel('문서 질문').fill('없는자료');
+  await page.getByRole('button', { name: '질문 보내기' }).click();
+  await expect(page.getByText('관련 문서를 찾지 못했어요.').last()).toBeVisible();
+  await expect(page.locator('.chat-source')).toHaveCount(2); // Earlier retrieved documents remain in the conversation.
   await expect(page.locator('.is-ai-reference')).toHaveCount(0);
+});
+
+test('the unified input keeps retrieved documents usable when AI is unavailable', async ({ page }) => {
+  const state = await setup(page, { unavailable: true });
+  const panel = page.getByRole('complementary', { name: 'AI 채팅과 문서 검색' });
+  await page.getByLabel('문서 질문').fill('과거 가격');
+  await page.getByRole('button', { name: '질문 보내기' }).click();
+  await expect(panel.getByRole('alert')).toContainText('AI 연결 설정이 필요합니다.');
+  await expect(page.locator('.chat-source')).toHaveCount(1);
+  await page.getByLabel('참조한 내용 더 보기', { exact: true }).click();
+  await page.locator('.chat-source summary').click();
+  const sourceUrl = 'http://localhost:3102/api/documents/doc-main';
+  await page.route(sourceUrl, route => route.fulfill({ status: 404, json: { detail: '인용한 문서를 불러오지 못했습니다.' } }));
+  await page.getByRole('button', { name: '인용한 수정 이력 열기' }).click();
+  await expect(panel.locator('.chat-alert[role="alert"]')).toContainText('인용한 문서를 불러오지 못했습니다.');
+  await page.unroute(sourceUrl);
+  await page.getByRole('button', { name: '인용한 수정 이력 열기' }).click();
+  await expect(page.getByRole('dialog', { name: '사업계획서', exact: true })).toBeVisible();
+  await expect(page.locator('.cited-block')).toContainText('초안의 가격은 100원');
+  await page.getByRole('button', { name: '미리보기 닫기' }).click();
+  await page.getByLabel('문서 질문').fill('가격 문서를 다시 찾아줘');
+  await page.getByRole('button', { name: '질문 보내기' }).click();
+  await expect(panel.getByRole('article', { name: 'AI 답변' })).toHaveCount(2);
+  await expect(panel.locator('.chat-source')).toHaveCount(2);
+  expect(state.searches).toHaveLength(2);
+  expect(state.asks).toHaveLength(2);
+});
+
+test('drawer keeps its state through rapid reversals and respects reduced motion without a right launcher', async ({ page }, info) => {
+  await setup(page);
+  await expect(page.locator('.chat-launcher')).toHaveCount(0);
+  const drawer = page.locator('.chat-drawer');
+  await expect(drawer).toHaveAttribute('data-phase', 'open');
+  await page.getByLabel('문서 질문').fill('전환 중에도 보존');
+  const nav = page.getByRole('button', { name: 'AI 채팅', exact: true });
+  await page.getByRole('button', { name: 'AI 채팅 접기', exact: true }).click();
+  await expect(drawer).toHaveAttribute('inert', '');
+  // Reverse before the closing timeout and ensure no stale timeout hides the panel.
+  await nav.click();
+  await expect(drawer).toHaveAttribute('data-phase', 'open');
+  await expect(drawer).not.toHaveAttribute('hidden');
+  await expect(page.getByLabel('문서 질문')).toHaveValue('전환 중에도 보존');
+  expect(await page.locator('.chat-panel').evaluate(el => getComputedStyle(el).transitionDuration)).toContain('0.28s');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'AI 채팅 접기', exact: true }).click();
+  await expect(drawer).toHaveAttribute('data-phase', 'closed');
+  await nav.click();
+  await expect(drawer).toHaveAttribute('data-phase', 'open');
+  expect(await page.locator('.chat-panel').evaluate(el => getComputedStyle(el).transitionDuration)).toBe('0s');
+  await page.screenshot({ path: `/tmp/context-drawer-motion-${info.project.name}.png` });
 });

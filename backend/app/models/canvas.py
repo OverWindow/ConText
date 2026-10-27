@@ -1,8 +1,10 @@
 import enum
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     Enum,
     Float,
     ForeignKey,
@@ -61,7 +63,12 @@ class DocumentRelation(Identity, Base):
             "target_handle IN ('left', 'right', 'top', 'bottom')", name="ck_relation_target_handle"
         ),
         UniqueConstraint(
-            "source_document_id", "target_document_id", "relation_type", name="uq_document_relation"
+            "source_document_id",
+            "target_document_id",
+            "relation_type",
+            "scope_id",
+            name="uq_document_relation",
+            postgresql_nulls_not_distinct=True,
         ),
     )
     workspace_id: Mapped[UUID] = mapped_column(
@@ -75,6 +82,11 @@ class DocumentRelation(Identity, Base):
         Enum(RelationType, name="document_relation_type")
     )
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    scope_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("canvas_scopes.id", ondelete="CASCADE")
+    )
+    revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class CanvasElement(Identity, Timestamps, Base):
@@ -110,3 +122,8 @@ class CanvasElement(Identity, Timestamps, Base):
     font_size: Mapped[int] = mapped_column(Integer, default=24)
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     updated_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    scope_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("canvas_scopes.id", ondelete="CASCADE")
+    )
+    revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

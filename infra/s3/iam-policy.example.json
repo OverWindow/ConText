@@ -8,6 +8,12 @@
       "Resource": "arn:aws:s3:::REPLACE_WITH_BUCKET_NAME/teams/*"
     },
     {
+      "Sid": "SyncUploadCleanup",
+      "Effect": "Allow",
+      "Action": "s3:DeleteObject",
+      "Resource": "arn:aws:s3:::REPLACE_WITH_BUCKET_NAME/teams/*/workspaces/*/sync-uploads/*"
+    },
+    {
       "Sid": "DistinguishMissingObject",
       "Effect": "Allow",
       "Action": "s3:ListBucket",

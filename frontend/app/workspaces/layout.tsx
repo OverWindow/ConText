@@ -8,5 +8,5 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   if (!supabase) redirect("/login");
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) redirect("/login");
-  return <main className="app-shell">{children}</main>;
+  return <div className="app-shell">{children}</div>;
 }

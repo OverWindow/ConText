@@ -11,7 +11,7 @@ const extensions = /\.(pdf|docx|hwpx|txt|md)$/i;
 const available = new Set(["UPLOADED", "PROCESSING", "READY"]);
 const pageSize = 100;
 
-export function DocumentPanel({ workspace, onChange, initialFile, onPreview }: { workspace: Workspace; onChange?: () => void; initialFile?: File | null; onPreview?: (document: WorkspaceDocument) => void }) {
+export function DocumentPanel({ workspace, onChange, initialFile, onPreview, onUploaded }: { workspace: Workspace; onChange?: () => void; initialFile?: File | null; onPreview?: (document: WorkspaceDocument) => void; onUploaded?: (document: WorkspaceDocument) => Promise<void> | void }) {
   const [duplicates, setDuplicates] = useState<Duplicate[]>([]);
   const [duplicateKey, setDuplicateKey] = useState("");
   const [confirmedDuplicate, setConfirmedDuplicate] = useState("");
@@ -31,6 +31,7 @@ export function DocumentPanel({ workspace, onChange, initialFile, onPreview }: {
   const [activeVersion, setActiveVersion] = useState<string | null>(null);
   const [retryVersion, setRetryVersion] = useState<string | null>(null);
   const requestId = useRef<string | null>(null);
+  const pendingPlacement = useRef(new Set<string>());
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -93,7 +94,10 @@ export function DocumentPanel({ workspace, onChange, initialFile, onPreview }: {
       setMessage("파일 업로드 중…");
       await sendFile(ticket, file, setProgress);
       setMessage("업로드 검증 중…");
-      await completeUpload(ticket.version_id);
+      if (!retryVersion) pendingPlacement.current.add(ticket.version_id);
+      const uploaded = await completeUpload(ticket.version_id);
+      if (!retryVersion) await onUploaded?.(uploaded);
+      pendingPlacement.current.delete(ticket.version_id);
       setMessage("문서를 올렸습니다. 본문 처리가 시작됩니다."); resetSelection();
     } catch (err) {
       setMessage(""); setActionError(err instanceof Error ? err.message : "문서를 올리지 못했습니다.");
@@ -106,7 +110,13 @@ export function DocumentPanel({ workspace, onChange, initialFile, onPreview }: {
     setActiveVersion(versionId); setActionError(null);
     try {
       if (action === "download") await downloadVersion(versionId);
-      else { await completeUpload(versionId); setRevision(value => value + 1); setMessage("업로드를 확인했습니다."); onChange?.(); }
+      else {
+        const uploaded = await completeUpload(versionId);
+        if (pendingPlacement.current.has(versionId)) {
+          await onUploaded?.(uploaded); pendingPlacement.current.delete(versionId); resetSelection();
+        }
+        setRevision(value => value + 1); setMessage("업로드를 확인했습니다."); onChange?.();
+      }
     } catch (err) { setActionError(err instanceof Error ? err.message : "요청을 완료하지 못했습니다."); }
     finally { setActiveVersion(null); }
   }

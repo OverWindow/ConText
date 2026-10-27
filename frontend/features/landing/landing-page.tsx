@@ -1,11 +1,11 @@
 import Link from "next/link";
 import {
   LuArrowDownToLine, LuArrowRight, LuArrowUpRight,
-  LuFileText, LuFolder, LuGlobe, LuHistory, LuLayers, LuLink2, LuMonitor,
-  LuPlus, LuSearch, LuSparkles,
+  LuGlobe, LuHistory, LuLink2, LuMonitor, LuPlus, LuSparkles,
 } from "react-icons/lu";
 import { FaApple, FaWindows } from "react-icons/fa6";
 import { BrandLogo } from "@/features/brand/brand-logo";
+import { WorkspacePreview } from "./workspace-preview";
 import styles from "./landing.module.css";
 
 function downloadUrl(value?: string) {
@@ -16,35 +16,6 @@ function downloadUrl(value?: string) {
   } catch {
     return undefined;
   }
-}
-
-function WorkspacePreview() {
-  return <figure className={styles.preview} aria-label="문서를 연결하는 ConText 예시 화면">
-    <div className={styles.previewChrome} aria-hidden="true">
-      <span className={styles.windowDots}><i /><i /><i /></span>
-      <span><LuLayers /> 나의 워크스페이스</span>
-      <span className={styles.previewLabel}>예시</span>
-    </div>
-    <div className={styles.previewBody} aria-hidden="true">
-      <div className={styles.previewSidebar}>
-        <span className={styles.previewMark}>C<span>t</span></span>
-        <span className={styles.previewNavActive}><LuLayers /></span><span><LuFolder /></span><span><LuSparkles /></span>
-        <span className={styles.previewAvatar}>나</span>
-      </div>
-      <div className={styles.previewCanvas}>
-        <div className={styles.canvasHeading}><span>브랜드 리뉴얼</span><LuSearch /></div>
-        <svg className={styles.connections} viewBox="0 0 520 370" preserveAspectRatio="none" fill="none">
-          <path d="M150 132 C230 132 210 235 292 235" /><path d="M345 115 C345 165 295 170 295 225" />
-          <path d="M150 132 C200 132 225 100 345 115" className={styles.dashedConnection} />
-          <circle cx="150" cy="132" r="4" /><circle cx="292" cy="235" r="4" /><circle cx="345" cy="115" r="4" />
-        </svg>
-        <div className={styles.documentOne}><span className={styles.paperBlue}><LuFileText /><b>W</b><i /><i /></span><strong>프로젝트 제안서.docx</strong></div>
-        <div className={styles.documentTwo}><span className={styles.paperPurple}><LuFileText /><b>M↓</b><i /><i /></span><strong>리서치 노트.md</strong></div>
-        <div className={styles.documentThree}><span className={styles.paperRose}><LuFileText /><b>PDF</b><i /><i /></span><strong>팀 미팅.pdf</strong></div>
-        <div className={styles.canvasTools}><span>−</span><span>100%</span><LuPlus /></div>
-      </div>
-    </div>
-  </figure>;
 }
 
 const features = [

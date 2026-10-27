@@ -26,6 +26,9 @@ services:
       MINDLOGIC_BASE_URL: ${MINDLOGIC_BASE_URL:-https://factchat-cloud.mindlogic.ai/v1/gateway}
       AI_MODEL: ${AI_MODEL:-gpt-5.6-luna}
       AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-3-small}
+      AI_CREDENTIALS_KEY: ${AI_CREDENTIALS_KEY:-}
+      AI_DAILY_REQUEST_LIMIT: ${AI_DAILY_REQUEST_LIMIT:-100}
+      SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
       PROCESSING_MAX_ATTEMPTS: ${PROCESSING_MAX_ATTEMPTS:-3}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace}}
       SUPABASE_URL: ${SUPABASE_URL:-}
@@ -38,6 +41,9 @@ services:
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       S3_PRESIGNED_URL_TTL: ${S3_PRESIGNED_URL_TTL:-600}
       MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
+      WEB_BASE_URL: ${WEB_BASE_URL:-}
+      SYNC_MAX_WORKSPACE_BYTES: ${SYNC_MAX_WORKSPACE_BYTES:-2147483648}
+      SYNC_SESSION_HOURS: ${SYNC_SESSION_HOURS:-24}
       CORS_ORIGINS: '${CORS_ORIGINS:-["http://localhost:3000"]}'
     ports:
       - "127.0.0.1:8000:8000"
@@ -95,20 +101,25 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: development
     environment:
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_WORKSPACE_API_URL: ${NEXT_PUBLIC_WORKSPACE_API_URL:-http://localhost:8001}
       NEXT_TELEMETRY_DISABLED: "1"
       DESKTOP_MAC_DOWNLOAD_URL: ${DESKTOP_MAC_DOWNLOAD_URL:-}
       DESKTOP_WINDOWS_DOWNLOAD_URL: ${DESKTOP_WINDOWS_DOWNLOAD_URL:-}
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next:/app/.next
+      - ./frontend:/workspace/frontend
+      - ./packages:/workspace/packages
+      - frontend_node_modules:/workspace/frontend/node_modules
+      - frontend_next:/workspace/frontend/.next
     depends_on:
       backend:
         condition: service_healthy

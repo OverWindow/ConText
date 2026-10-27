@@ -1,0 +1,2 @@
+/** Portable folder inventory. Paths here are relative names reconstructed from the tree. */
+export type FolderTreeEntry = { id: string; workspace_id: string; relative_path: string; parent_path: string; name: string; kind: 'file' | 'directory' | 'link' | 'other'; extension: string; size: number; mtime: number; excluded: number; x: number | null; y: number | null; area_positioned?: boolean; cached_only?: boolean; disconnected?: boolean; document_id?: string; version_number?: number; version_count?: number; available?: boolean };

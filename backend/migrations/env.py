@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.models import (  # noqa: F401
+    ai_connections,
     canvas,
     conversion,
     documents,
@@ -10,6 +11,7 @@ from app.models import (  # noqa: F401
     processing,
     rag,
     writing,
+    sync,
 )
 from app.models.domain import Base
 

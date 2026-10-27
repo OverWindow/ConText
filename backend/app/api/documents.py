@@ -43,7 +43,7 @@ def list_documents(
 ):
     return db.scalars(
         select(Document)
-        .where(Document.workspace_id == workspace_id)
+        .where(Document.workspace_id == workspace_id, Document.deleted_at.is_(None))
         .options(selectinload(Document.versions))
         .order_by(Document.created_at.desc(), Document.id)
         .limit(limit)

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -43,6 +43,16 @@ def get_workspace(
     if workspace is None:
         raise HTTPException(404, "Workspace not found")
     return workspaces.workspace_read(workspace, member.role)
+
+
+@router.delete("/workspaces/{workspace_id}", status_code=204)
+def delete_workspace(
+    workspace_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    workspaces.delete_workspace(db, workspace_id, user.id)
+    return Response(status_code=204)
 
 
 @router.get("/workspaces/{workspace_id}/members")

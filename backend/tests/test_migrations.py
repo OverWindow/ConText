@@ -31,5 +31,13 @@ def test_migration_roundtrip_and_model_match(engine):
         "chat_messages",
         "document_conversions",
         "writing_drafts",
+        "ai_connections",
+        "ai_requests",
+        "sync_bindings",
+        "workspace_entries",
+        "canvas_scopes",
+        "sync_sessions",
+        "sync_session_items",
+        "sync_operations",
     }
     command.check(config)

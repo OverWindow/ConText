@@ -1,0 +1,12 @@
+.ai-settings { width: min(560px, 92vw); max-height: 88dvh; overflow: auto; margin: auto; padding: 24px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.ai-settings::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
+.ai-settings header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ai-settings h2 { margin: 0; font-size: 20px; }
+.ai-settings label { display: grid; gap: 8px; margin: 18px 0; font-size: 14px; font-weight: 600; }
+.ai-settings input, .ai-settings select { width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: var(--surface); font: inherit; }
+.ai-settings p { color: var(--text-muted); font-size: 13px; line-height: 1.7; }
+.ai-settings button { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--primary-strong); cursor: pointer; }
+.ai-settings button:disabled { opacity: .5; cursor: not-allowed; }
+.ai-settings .ai-data-note { padding: 12px; border-radius: 8px; background: var(--primary-soft); }
+.ai-settings footer { display: flex; justify-content: flex-end; }
+.ai-settings footer button { background: var(--primary); color: var(--on-primary); }

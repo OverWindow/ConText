@@ -45,6 +45,9 @@ REDIS_URL=${{Redis.REDIS_URL}}
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_JWT_AUDIENCE=authenticated
 CORS_ORIGINS=["https://<your-app>.vercel.app","https://<your-custom-domain>"]
+WEB_BASE_URL=https://<your-app>.vercel.app
+SYNC_MAX_WORKSPACE_BYTES=2147483648
+SYNC_SESSION_HOURS=24
 ```
 
 실제 운영 origin만 CORS 배열에 넣고 사용하지 않는 예시 도메인은 지운다. `DATABASE_URL`/`REDIS_URL`은 Railway 내부 네트워크 연결 주소를 사용한다. `postgres`/`redis`라는 Compose 서비스 이름이나 `localhost`는 Railway 설정에 쓰지 않는다. DB의 기본 `postgresql://` URL은 앱에서 psycopg 드라이버 URL로 정규화한다.

@@ -1,0 +1,8 @@
+.context-navigation .nav-caption{display:flex;align-items:center;gap:7px;color:var(--text-muted);font-size:10px;letter-spacing:.5px;margin:0 10px 12px}
+.context-navigation .nav-item{width:100%;display:flex;align-items:center;gap:11px;padding:13px 12px;border:0;background:transparent;color:var(--text-muted);border-radius:10px;font-size:12px;font-weight:500;margin-bottom:6px;justify-content:flex-start}
+.context-navigation .nav-item svg{font-size:18px}.context-navigation .nav-item:hover{background:var(--surface-subtle)}
+.context-navigation .nav-item.active,.context-navigation .nav-item.selected{background:var(--primary-soft);color:var(--primary-strong);font-weight:600;box-shadow:inset 3px 0 0 var(--primary)}
+.context-navigation .nav-count{margin-left:auto;font-size:10px;background:#fff8;border-radius:5px;padding:2px 5px}
+.context-navigation>nav{flex-shrink:0}.context-navigation .sidebar-bottom{margin-top:auto;padding-top:20px;color:var(--text-muted);font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.context-navigation .nav-item>.sidebar-label{margin:0;font-size:inherit;font-weight:inherit;letter-spacing:0;color:inherit}
+.sidebar-compact .context-navigation .nav-item{justify-content:center;padding:13px 0;min-height:44px}

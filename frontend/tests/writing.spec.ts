@@ -40,6 +40,12 @@ async function setup(page: Page, options: { viewer?: boolean; lost?: boolean; de
       expect(url.searchParams.get('revision')).toBe(String(draft.revision));
       await route.fulfill({ contentType: 'application/octet-stream', body: Buffer.from('verified separately by backend roundtrip tests') }); return;
     }
+    if (path.endsWith('/blank')) {
+      exists = true;
+      draft.title = '새 문서'; draft.content = { title: '새 문서', blocks: [{ id: 'blank', type: 'paragraph', text: '', level: 2, items: [], rows: [], source_ids: [] }] };
+      draft.sources = []; draft.checks = [];
+      await route.fulfill({ json: draft }); return;
+    }
     if (path.endsWith('/writing')) {
       if (request.method() === 'GET') { await route.fulfill({ json: exists ? [{ id: draft.id, title: draft.title }] : [] }); return; }
       requests.push(request.postDataJSON()); exists = true;
@@ -72,6 +78,43 @@ async function generate(page: Page) {
   await expect(page.locator('.writing-editor .ce-paragraph')).toContainText('자료를 찾아');
   await expect(page.getByText('저장됨 · 버전 1', { exact: true })).toBeVisible();
 }
+
+test('manual writing uses the shared editor without an AI request', async ({ page }) => {
+  const state = await setup(page);
+  await page.getByRole('button', { name: '직접 작성하기' }).click();
+  await page.getByRole('textbox', { name: '문서 제목' }).fill('직접 쓴 문서');
+  await expect(page.locator('.ce-paragraph[contenteditable="true"]')).toBeVisible();
+  await page.locator('.ce-paragraph[contenteditable="true"]').fill('AI 없이 작성한 한글 본문');
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expect(page.getByText('저장됨 · 버전 2', { exact: true })).toBeVisible();
+  expect(state.requests).toHaveLength(0);
+  expect(state.saved[0].blocks[0].text).toBe('AI 없이 작성한 한글 본문');
+});
+
+test('shared AI settings connect a personal key, load account models and clear the input', async ({ page }) => {
+  await setup(page);
+  let value = { mode: 'managed', model: '', has_personal_key: false, personal_key_storage_available: true };
+  const submitted: string[] = [];
+  await page.route('**/api/ai/connection', async route => {
+    if (route.request().method() === 'PUT') {
+      const input = route.request().postDataJSON();
+      if (input.api_key) submitted.push(input.api_key);
+      value = { ...value, mode: input.mode, model: input.model, has_personal_key: value.has_personal_key || !!input.api_key };
+    }
+    await route.fulfill({ json: value });
+  });
+  await page.route('**/api/ai/models', route => route.fulfill({ json: [{ id: 'personal-model', name: '개인 계정 모델' }] }));
+  await page.getByRole('button', { name: 'AI 연결', exact: true }).click();
+  await page.getByLabel('AI 연결 방식').selectOption('personal');
+  await page.getByLabel('ChatKHU API 키', { exact: true }).fill('fake-personal-test-key');
+  await page.getByRole('button', { name: '연결 확인 · 모델 불러오기' }).click();
+  await expect(page.getByRole('dialog', { name: 'AI 연결 설정', exact: true }).getByRole('status')).toContainText('사용 가능한 모델');
+  await expect(page.getByLabel('ChatKHU API 키', { exact: true })).toHaveValue('');
+  await page.getByLabel('AI 모델', { exact: true }).selectOption('personal-model');
+  await page.getByRole('button', { name: '설정 저장' }).click();
+  expect(submitted).toEqual(['fake-personal-test-key']);
+  expect(value.model).toBe('personal-model');
+});
 
 test('automatic draft, Korean block editing, evidence, reviewed AI changes and exports', async ({ page }, info) => {
   const state = await setup(page);

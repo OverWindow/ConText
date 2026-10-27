@@ -9,12 +9,15 @@
   "scripts": {
     "dev": "npm run build && electron .",
     "start": "electron .",
-    "build": "tsc --noEmit && vite build",
-    "test": "node --test tests/engine.test.mjs",
+    "build": "node scripts/build.mjs",
+    "processor:build": "node processor/build.mjs",
+    "test": "node --test tests/*.test.mjs",
     "test:e2e": "npm run build && playwright test",
-    "pack": "npm run build && electron-builder --dir",
-    "dist:mac": "npm run build && electron-builder --mac dmg",
-    "dist:win": "npm run build && electron-builder --win nsis"
+    "pack": "npm run build && npm run processor:check && electron-builder --dir",
+    "dist:mac": "node scripts/check-processor.mjs darwin && npm run build && electron-builder --mac dmg",
+    "dist:win": "node scripts/check-processor.mjs win32 && npm run build && electron-builder --win nsis",
+    "processor:check": "node scripts/check-processor.mjs",
+    "pretest": "npm --prefix ../.. run build:core"
   },
   "dependencies": {
     "@xyflow/react": "12.12.0",
@@ -31,7 +34,12 @@
     "electron": "44.9.0",
     "electron-builder": "26.15.3",
     "typescript": "5.9.3",
-    "vite": "8.3.4"
+    "vite": "8.3.4",
+    "@context/contracts": "file:../../packages/contracts",
+    "@context/domain": "file:../../packages/domain",
+    "@context/sync-client": "file:../../packages/sync-client",
+    "@context/workspace-client": "file:../../packages/workspace-client",
+    "@context/workspace-ui": "file:../../packages/workspace-ui"
   },
   "build": {
     "appId": "ai.context.desktop",
@@ -39,8 +47,15 @@
     "directories": {
       "output": "release"
     },
+    "extraResources": [
+      {
+        "from": "processor/dist/context-processor",
+        "to": "context-processor"
+      }
+    ],
     "files": [
       "dist/**",
+      "core/**",
       "electron/**",
       "package.json"
     ],
@@ -50,13 +65,13 @@
         "dmg"
       ],
       "identity": null,
-      "icon": "../../frontend/public/brand/context-symbol.png"
+      "icon": "../../packages/workspace-ui/assets/context-symbol.png"
     },
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "../../frontend/public/brand/context-symbol.png"
+      "icon": "../../packages/workspace-ui/assets/context-symbol.png"
     },
     "nsis": {
       "oneClick": false,

@@ -1,8 +1,12 @@
 import logging
 import time
 
+from sqlalchemy import update
+
 from app.conversion.engine import dispatch as dispatch_conversion
+from app.db.session import SessionLocal
 from app.intelligence.engine import dispatch as dispatch_analysis
+from app.models.ai_connections import AIRequest
 from app.processing.engine import dispatch
 from app.processing.worker import (
     analyze_document,
@@ -13,10 +17,29 @@ from app.processing.worker import (
 )
 from app.rag.chat import dispatch as dispatch_chat
 from app.rag.indexing import dispatch as dispatch_index
+from app.services.sync import cleanup as cleanup_sync
+from app.storage.s3 import get_storage
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     while True:
+        try:
+            with SessionLocal() as db:
+                from app.core.config import get_settings
+                if get_settings().aws_s3_bucket:
+                    cleanup_sync(db, get_storage())
+        except Exception:
+            logging.warning("Sync cleanup unavailable; durable cleanup will retry.")
+        try:
+            with SessionLocal() as db:
+                db.execute(
+                    update(AIRequest)
+                    .where(AIRequest.expires_at < int(time.time()))
+                    .values(response_ciphertext=None, expires_at=None)
+                )
+                db.commit()
+        except Exception:
+            logging.warning("Temporary AI response cleanup unavailable; retrying next cycle.")
         try:
             dispatch(lambda version_id: process_document.delay(version_id))
         except Exception:

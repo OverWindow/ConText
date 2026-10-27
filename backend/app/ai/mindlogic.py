@@ -13,21 +13,26 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class MindlogicProvider:
-    def __init__(self):
+    def __init__(self, *, api_key=None, model=None, embedding_model=None):
         self.settings = get_settings()
+        self.api_key = self.settings.mindlogic_api_key if api_key is None else api_key
+        self.model = self.settings.ai_model if model is None else model
+        self.embedding_model = (
+            self.settings.ai_embedding_model if embedding_model is None else embedding_model
+        )
 
-    def request(self, path, data):
-        if not self.settings.mindlogic_api_key:
+    def request(self, path, data=None):
+        if not self.api_key:
             raise AIUnavailable("AI_NOT_CONFIGURED")
         request = Request(
             self.settings.mindlogic_base_url.rstrip("/") + path,
-            data=json.dumps(data).encode(),
+            data=json.dumps(data).encode() if data is not None else None,
             headers={
-                "Authorization": f"Bearer {self.settings.mindlogic_api_key}",
+                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 "User-Agent": "doc-workspace/0.7",
             },
-            method="POST",
+            method="POST" if data is not None else "GET",
         )
         try:
             with build_opener(NoRedirect).open(request, timeout=30) as response:
@@ -36,7 +41,15 @@ class MindlogicProvider:
                     raise AIUnavailable("AI_INVALID_RESPONSE")
                 return json.loads(body)
         except HTTPError as exc:
-            code = "AI_FORBIDDEN" if exc.code in (401, 403) else "AI_UNAVAILABLE"
+            code = (
+                "AI_FORBIDDEN"
+                if exc.code in (401, 403)
+                else "AI_RATE_LIMITED"
+                if exc.code in (402, 429)
+                else "AI_UNSUPPORTED_REQUEST"
+                if exc.code in (400, 422)
+                else "AI_UNAVAILABLE"
+            )
             raise AIUnavailable(code) from exc
         except (URLError, TimeoutError, OSError, ValueError) as exc:
             # Neither gateway bodies nor credentials enter errors or logs.
@@ -46,11 +59,9 @@ class MindlogicProvider:
         data = self.request(
             "/chat/completions/",
             {
-                "model": self.settings.ai_model,
+                "model": self.model,
                 "messages": messages,
-                "response_format": {"type": "json_object"},
-                "max_completion_tokens": 16000,
-                "reasoning_effort": "low",
+                "max_tokens": 16000,
             },
         )
         try:
@@ -65,12 +76,12 @@ class MindlogicProvider:
             raise AIUnavailable("AI_INVALID_RESPONSE") from exc
 
     def embed(self, texts):
-        if not self.settings.ai_embedding_model:
+        if not self.embedding_model:
             raise AIUnavailable("EMBEDDING_NOT_CONFIGURED")
         data = self.request(
             "/embeddings/",
             {
-                "model": self.settings.ai_embedding_model,
+                "model": self.embedding_model,
                 "input": texts,
             },
         )

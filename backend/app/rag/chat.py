@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.ai.connections import selected_service
 from app.ai.provider import AIUnavailable
 from app.core.config import get_settings
 from app.db.session import SessionLocal
@@ -191,16 +192,26 @@ def run(message_id):
             if len(search_text) < 60 and prior_question:
                 search_text = prior_question[:500] + "\n" + search_text
             scope = resolve_scope(question.content, question.options["scope"])
-            evidence = retrieve(
-                db, session.workspace_id, search_text, scope, question.options["as_of"]
-            )
-            answer = grounded_answer(question.content, evidence, history)
+            service = selected_service(db, message.created_by)
+            if service:
+                evidence = retrieve(
+                    db, session.workspace_id, search_text, scope, question.options["as_of"], service
+                )
+                answer = grounded_answer(question.content, evidence, history, service)
+            else:
+                evidence = retrieve(
+                    db, session.workspace_id, search_text, scope, question.options["as_of"]
+                )
+                answer = grounded_answer(question.content, evidence, history)
             used = {ref for claim in answer["claims"] for ref in claim["source_ids"]}
             result = {
                 **evidence,
                 **answer,
                 "sources": [s for s in evidence["sources"] if s["id"] in used],
-                "provenance": {"model": get_settings().ai_model, "prompt_version": "rag-v1"},
+                "provenance": {
+                    "model": service.provider.model if service else get_settings().ai_model,
+                    "prompt_version": "rag-v1",
+                },
             }
             content = "\n\n".join(c["text"] for c in answer["claims"])
             if not content:

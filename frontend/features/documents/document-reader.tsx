@@ -4,7 +4,8 @@ import { LuBookOpen, LuRefreshCw, LuLoaderCircle, LuTriangleAlert } from "react-
 import { api } from "@/lib/api";
 import { message } from "@/lib/labels";
 import type { DocumentVersion } from "./api";
-type Block = { id: number; type: string; text: string; source: { page?: number; section?: string; element?: number; line?: number; paragraph?: number }; rows?: string[][]; level?: number };
+import { DocumentBlocks } from "../../shared/ui/document-blocks";
+import type { NormalizedBlock as Block } from "../../shared/core/documents";
 type Content = { blocks: Block[]; total: number; next_offset: number | null; warnings: string[] };
 type Job = { state: string; error_message: string | null; summary: { block_count: number; character_count: number; page_count: number | null; warnings: string[] } | null };
 export function DocumentReader({ version, editable, onChange, initialBlockId }: { initialBlockId?: number; version: DocumentVersion; editable: boolean; onChange: () => void }) {
@@ -49,11 +50,7 @@ export function DocumentReader({ version, editable, onChange, initialBlockId }: 
     {job?.state === "FAILED" && <div className="notice"><LuTriangleAlert /><p>{job.error_message || "문서를 처리하지 못했습니다."}</p>{editable && <button className="secondary" disabled={busy} onClick={retry}><LuRefreshCw /> 다시 처리</button>}</div>}
     {job?.summary && <p className="muted reader-meta">{job.summary.block_count}개 문단 · {job.summary.character_count.toLocaleString("ko-KR")}자{job.summary.page_count ? ` · ${job.summary.page_count}페이지` : ""}</p>}
     {content?.warnings.map((warning, i) => <p className="notice" key={i}>{warning}</p>)}
-    {content?.blocks.map(block => <article className={`text-block block-${block.type} ${block.id === initialBlockId ? "cited-block" : ""}`} key={block.id}>
-      {block.source.page && <small>{block.source.page}페이지</small>}
-      {block.source.section && <small>구역 {Number(block.source.section.match(/section(\d+)/)?.[1] || 0) + 1} · 문단 {block.source.element}</small>}
-      {block.type === "heading" ? <h4>{block.text}</h4> : block.type === "table" && block.rows ? <div className="table-scroll"><table><tbody>{block.rows.map((row, i) => <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>)}</tbody></table></div> : block.type === "code" ? <pre>{block.text}</pre> : <p>{block.type === "list_item" ? "• " : ""}{block.text}</p>}
-    </article>)}
+    {content && <DocumentBlocks blocks={content.blocks} initialBlockId={initialBlockId} />}
     {content?.next_offset != null && <button className="secondary wide" disabled={busy} onClick={more}>{busy ? "불러오는 중…" : "다음 문단 보기"}</button>}
   </section>;
 }

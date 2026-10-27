@@ -11,6 +11,8 @@ export type Workspace = {
   created_at: string;
   updated_at: string;
   role: "OWNER" | "EDITOR" | "VIEWER";
+  sync_mode?: "none" | "desktop";
+  sync_revision?: number;
 };
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {

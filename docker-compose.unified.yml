@@ -1,0 +1,45 @@
+# Additive development cutover: the existing Python service remains a processor.
+# docker compose --env-file .env.development -f docker-compose.yml -f docker-compose.unified.yml up -d unified-server backend
+services:
+  unified-server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    environment:
+      UNIFIED_DATABASE_URL: postgresql://${POSTGRES_USER:-workspace}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workspace}
+      UNIFIED_HOST: 0.0.0.0
+      UNIFIED_PORT: 8001
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      S3_PRESIGNED_URL_TTL: ${S3_PRESIGNED_URL_TTL:-600}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-52428800}
+      SYNC_MAX_WORKSPACE_BYTES: ${SYNC_MAX_WORKSPACE_BYTES:-2147483648}
+      CORS_ORIGINS: '${CORS_ORIGINS:-["http://localhost:3000"]}'
+      UNIFIED_PYTHON_URL: http://backend:8000
+      INTERNAL_WORKER_TOKEN: ${INTERNAL_WORKER_TOKEN:?Set a private INTERNAL_WORKER_TOKEN in the selected environment file}
+    ports:
+      - "127.0.0.1:8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8001/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    environment:
+      LEGACY_WORKSPACE_API_ENABLED: 'false'
+      INTERNAL_WORKER_TOKEN: ${INTERNAL_WORKER_TOKEN:?Set a private INTERNAL_WORKER_TOKEN}
+      INTERNAL_WORKER_ALLOWED_HOSTS: '${INTERNAL_WORKER_ALLOWED_HOSTS:-[]}'
+      UNIFIED_API_URL: ${UNIFIED_API_URL:-http://localhost:8001}
+      WEB_BASE_URL: ${WEB_BASE_URL:-http://localhost:3000}
+  frontend:
+    environment:
+      NEXT_PUBLIC_WORKSPACE_API_URL: ${NEXT_PUBLIC_WORKSPACE_API_URL:-http://localhost:8001}

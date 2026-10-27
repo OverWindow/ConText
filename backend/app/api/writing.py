@@ -1,19 +1,20 @@
 from typing import Literal
 from urllib.parse import quote
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.ai.connections import selected_service
 from app.ai.provider import AIUnavailable
 from app.auth.dependencies import require_workspace_member, require_workspace_role
 from app.conversion.renderers import render_docx
 from app.db.session import get_db
 from app.models.domain import Role, WorkspaceMember
 from app.models.writing import WritingDraft
-from app.schemas.writing import GenerateRequest, RevisionRequest, SaveRequest
+from app.schemas.writing import BlankRequest, GenerateRequest, RevisionRequest, SaveRequest
 from app.services import writing
 
 
@@ -57,9 +58,10 @@ def find(db, workspace_id, draft_id, revision=None):
     return d
 
 
-def generate(db, workspace_id, prompt, current=None):
+def generate(db, workspace_id, prompt, current=None, user_id=None):
     try:
-        return writing.generate(db, workspace_id, prompt, current)
+        service = selected_service(db, user_id) if user_id else None
+        return writing.generate(db, workspace_id, prompt, current, service)
     except AIUnavailable as exc:
         messages = {
             "AI_NOT_CONFIGURED": "서버에 ChatKHU API 키를 설정해 주세요.",
@@ -105,7 +107,7 @@ def create(
         if previous.prompt != data.prompt:
             raise HTTPException(409, "다른 작성 요청에 사용된 식별자입니다.")
         return read(previous)
-    result = generate(db, workspace_id, data.prompt)
+    result = generate(db, workspace_id, data.prompt, user_id=member.user_id)
     draft = WritingDraft(
         workspace_id=workspace_id,
         created_by=member.user_id,
@@ -123,6 +125,59 @@ def create(
         if not previous or previous.prompt != data.prompt:
             raise HTTPException(409, "동시에 문서가 생성됐습니다. 목록을 확인해 주세요.")
         return read(previous)
+    return read(draft)
+
+
+@router.post("/blank", status_code=201)
+def create_blank(
+    workspace_id: UUID,
+    data: BlankRequest,
+    member: WorkspaceMember = Depends(edit),
+    db: Session = Depends(get_db),
+):
+    query = select(WritingDraft).where(
+        WritingDraft.workspace_id == workspace_id,
+        WritingDraft.created_by == member.user_id,
+        WritingDraft.request_id == data.request_id,
+    )
+    previous = db.scalar(query)
+    if previous:
+        if previous.prompt:
+            raise HTTPException(409, "다른 작성 요청에 사용된 식별자입니다.")
+        return read(previous)
+    content = {
+        "title": "새 문서",
+        "blocks": [
+            {
+                "id": str(uuid4()),
+                "type": "paragraph",
+                "text": "",
+                "level": 2,
+                "items": [],
+                "rows": [],
+                "source_ids": [],
+            }
+        ],
+    }
+    draft = WritingDraft(
+        workspace_id=workspace_id,
+        created_by=member.user_id,
+        request_id=data.request_id,
+        title=content["title"],
+        content=content,
+        sources=[],
+        checks=[],
+        history=[],
+        prompt="",
+    )
+    db.add(draft)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        draft = db.scalar(query)
+        if not draft or draft.prompt:
+            raise HTTPException(409, "동시에 문서가 생성됐습니다. 목록을 확인해 주세요.")
     return read(draft)
 
 
@@ -191,7 +246,7 @@ def propose(
             raise HTTPException(409, "다른 수정 요청에 사용된 식별자입니다.")
         return read(draft)
     draft = find(db, workspace_id, draft_id, data.revision)
-    result = generate(db, workspace_id, data.prompt, draft)
+    result = generate(db, workspace_id, data.prompt, draft, member.user_id)
     draft.proposal = {**result, "request_id": str(data.request_id), "prompt": data.prompt}
     draft.revision += 1
     db.commit()

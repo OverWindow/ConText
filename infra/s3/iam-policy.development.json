@@ -11,6 +11,12 @@
       "Resource": "arn:aws:s3:::ai-doc-workspace-dev/teams/*"
     },
     {
+      "Sid": "SyncUploadCleanup",
+      "Effect": "Allow",
+      "Action": "s3:DeleteObject",
+      "Resource": "arn:aws:s3:::ai-doc-workspace-dev/teams/*/workspaces/*/sync-uploads/*"
+    },
+    {
       "Sid": "DistinguishMissingObject",
       "Effect": "Allow",
       "Action": "s3:ListBucket",

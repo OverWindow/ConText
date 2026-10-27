@@ -74,7 +74,7 @@ aws s3api put-bucket-cors --bucket "$DOCS_BUCKET" --cors-configuration file://in
 
 ### 2. 런타임 IAM 권한
 
-`infra/s3/iam-policy.example.json`의 두 `REPLACE_WITH_BUCKET_NAME`을 실제 이름으로 바꿔 백엔드 IAM 역할/사용자에 연결한다. 전용 버킷의 `teams/*` GetObject/PutObject와 누락된 객체 HEAD를 404로 구분하기 위한 ListBucket만 포함한다. DeleteObject, bucket 설정 변경 권한은 런타임에 필요 없다. 이 서비스의 모든 팀은 서버 역할을 공유하고 팀별 접근은 API 권한 검사와 개별 서명으로 제한한다.
+`infra/s3/iam-policy.example.json`의 `REPLACE_WITH_BUCKET_NAME`을 실제 이름으로 바꿔 백엔드 IAM 역할/사용자에 연결한다. 문서는 `teams/*` GetObject/PutObject와 누락된 객체 HEAD를 404로 구분하기 위한 ListBucket을 사용한다. 수동 동기화의 만료 업로드 정리는 `teams/*/workspaces/*/sync-uploads/*`에만 DeleteObject를 추가한다. 정리기는 DB에서 어느 버전도 참조하지 않는 만료 키만 지운다. 기존 문서 경로의 DeleteObject와 버킷 설정 변경 권한은 요청하지 않는다. 이 서비스의 모든 팀은 서버 역할을 공유하고 팀별 접근은 API 권한 검사와 개별 서명으로 제한한다.
 
 로컬 Compose는 개발용 IAM access key를 backend에만 전달한다. AWS 배포에서는 IAM 역할과 임시 자격 증명을 사용하고 정적 키는 비운다. 기본 credential chain을 사용하므로 호스트에서 실행하는 백엔드는 AWS_PROFILE도 사용할 수 있지만 현재 Compose는 호스트의 ~/.aws를 mount하지 않는다.
 

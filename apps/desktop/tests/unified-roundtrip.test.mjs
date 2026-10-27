@@ -1,0 +1,98 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {randomUUID,createHash} from 'node:crypto';
+import {WorkspaceEngine} from '../electron/engine.mjs';
+import {UnifiedTransfer} from '../electron/unified-transfer.mjs';
+
+const endpoint=process.env.CONTEXT_UNIFIED_TEST_URL;
+test('two real native SQLite clients converge through HTTP/PG/S3, preserve offline versions and survive lost ACK/deletion',{skip:!endpoint,timeout:120000},async t=>{
+  const fixture=await(await fetch(`${endpoint}/__fixture/config`)).json();
+  const headers={Authorization:`Bearer ${fixture.token}`,'Content-Type':'application/json'};
+  async function api(method,route,body){const response=await fetch(`${endpoint}/v2${route}`,{method,headers:body===undefined?{Authorization:headers.Authorization}:headers,...(body===undefined?{}:{body:JSON.stringify(body)})});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;}
+  const directory=await mkdtemp(path.join(tmpdir(),'context-unified-two-pc-'));
+  const rootA=path.join(directory,'PC-A'),rootB=path.join(directory,'PC-B'),dataA=path.join(directory,'app-A'),dataB=path.join(directory,'app-B');
+  await mkdir(path.join(rootA,'중첩','빈 폴더'),{recursive:true});await mkdir(rootB);
+  await writeFile(path.join(rootA,'중첩','문서.md'),'# 원본\n\n두 기기에서 같은 파일을 엽니다.');await writeFile(path.join(rootA,'empty.bin'),'');
+  let engineA=await new WorkspaceEngine(dataA).init({watchFiles:false}),engineB=await new WorkspaceEngine(dataB).init({watchFiles:false});
+  t.after(async()=>{await engineA.close();await engineB.close();await rm(directory,{recursive:true,force:true});});
+  const id=(await engineA.connect(rootA)).workspace.id;
+  const config={serverBaseUrl:'http://127.0.0.1:8000',auth:{unified_api_url:endpoint,web_base_url:'http://localhost:3000'},session:{identity:randomUUID(),user:{id:fixture.user.id}}};
+  const connections={read:async()=>structuredClone(config),token:async()=>fixture.token};
+  const callA=(method,...args)=>engineA[method](...args),callB=(method,...args)=>engineB[method](...args);
+  let lose=false;
+  const traces=[];
+  t.after(()=>{if(t.passed===false)t.diagnostic(JSON.stringify(traces));});
+  const fetcher=async(url,init)=>{if(init.body){const body=JSON.parse(init.body);traces.push({route:new URL(url).pathname,type:body.type||body.commands?.map(c=>c.type),versions:body.payload?.state?Object.keys(body.payload.state.versions).length:undefined,base:body.base_revisions});}const response=await fetch(url,init);if(lose&&url.endsWith('/commands')&&response.ok){await response.body.cancel();throw Object.assign(new Error('synthetic lost ACK'),{status:503});}return response;};
+  let transferA=new UnifiedTransfer(connections,callA,{fetcher}),transferB=new UnifiedTransfer(connections,callB);
+  const initialEntry=engineA.snapshot(id).entries.find(e=>e.name==='문서.md');
+  const first=await engineA.openDocument(id,initialEntry.id);
+  await writeFile(path.join(rootA,'중첩','문서.md'),'# 게시할 파일 내용\n\n참조 버전은 이전 원본으로 고정합니다.');await engineA.scan(id);const initialHead=await engineA.openDocument(id,initialEntry.id);
+  const pinnedDocument=engineA.getDocument(id,initialEntry.id);engineA.setCurrentVersion(id,pinnedDocument.id,first.version_id,pinnedDocument.revision);
+  engineA.savePositions(id,[{id:initialEntry.id,x:330,y:440}]);
+  const noteId=randomUUID();engineA.putCanvasItem(id,'','element',{id:noteId,kind:'text',text:'공통 메모',x:30,y:50,width:200,height:100,color:'amber',font_size:18},0);
+  const draft=engineA.createDraft(id,randomUUID());
+  engineA.saveDraft(id,draft.id,draft.revision,{title:'공통 초안',blocks:[{id:'paragraph',type:'paragraph',text:'보존할 작성 내용',level:1,items:[],rows:[],source_ids:[]}]});
+  const chat=engineA.createChatSession(id,{requestId:randomUUID(),title:'공통 대화'});
+  const prepared=await engineA.prepareChat(id,chat.id,{requestId:randomUUID(),question:'원본',scope:'current',as_of:null});assert.ok(prepared.sources.length);
+  engineA.finishChat(id,chat.id,prepared,{claims:[{text:'원본 문서를 인용한 답변',source_ids:[prepared.sources[0].id]}],insufficient:false});
+  const mixedSources=[prepared.sources[0],{id:`note-${noteId}`,kind:'note',element_id:noteId,text:'공통 메모 인용',document_title:'공통 메모'},{id:`chat-${prepared.messageId}`,kind:'chat',message_id:prepared.messageId,session_id:chat.id,text:'원본 문서를 인용한 답변',document_title:'공통 대화'},{id:`draft-${draft.id}`,kind:'draft',draft_id:draft.id,text:'보존할 작성 내용',document_title:'공통 초안'}];
+  const mixed=engineA.documents.create(id,randomUUID(),{content:{title:'혼합 출처',blocks:[{id:'mixed',type:'paragraph',text:'문서·메모·대화·초안 근거',source_ids:mixedSources.map(s=>s.id)}]},sources:mixedSources});
+  engineA.saveDraft(id,mixed.id,mixed.revision,{...mixed.content,title:'혼합 출처 보존'});
+  assert.equal((await transferA.start(id)).phase,'complete');
+  let boot=await api('GET',`/workspaces/${id}/bootstrap`);
+  assert.equal(boot.state.versions[first.version_id].blob.sha256,first.sha256);assert.ok(Object.values(boot.state.entries).some(e=>e.name==='빈 폴더'));assert.equal(boot.state.entries[initialEntry.id].x,330);
+  assert.equal(boot.state.documents[pinnedDocument.id].content_head_id,initialHead.version_id);assert.equal(boot.state.documents[pinnedDocument.id].reference_head_id,first.version_id);assert.equal(boot.state.documents[pinnedDocument.id].reference_pinned,true);assert.deepEqual(boot.state.drafts[mixed.id].sources.map(s=>s.kind).sort(),['chat','document','draft','note']);assert.equal(boot.state.chat_messages[prepared.messageId].content,'원본 문서를 인용한 답변');
+  assert.equal(boot.state.drafts[draft.id].title,'공통 초안');assert.equal(boot.state.chat_sessions[chat.id].title,'공통 대화');assert.ok(Object.values(boot.state.canvas_elements).some(e=>e.content.includes('공통 메모')));
+  assert.ok(!JSON.stringify(boot.state).includes(directory));
+  const attached=await transferB.attach(rootB,id);assert.equal(attached.workspace.id,id);const materialized=attached.entries.find(e=>e.id===initialEntry.id);assert.ok(materialized,'Attach must return the fresh snapshot containing the downloaded file');assert.equal(materialized.present,1);
+  assert.equal(await readFile(path.join(rootB,'중첩','문서.md'),'utf8'),'# 게시할 파일 내용\n\n참조 버전은 이전 원본으로 고정합니다.');assert.equal((await readFile(path.join(rootB,'empty.bin'))).length,0);
+  assert.equal(engineB.getDocument(id,initialEntry.id).current_version_id,first.version_id);assert.equal(engineB.chatMessages(id,chat.id).find(m=>m.id===prepared.messageId).content,'원본 문서를 인용한 답변');assert.equal(engineB.unifiedState(id).drafts[mixed.id].sources.length,4);
+  assert.equal(engineB.unifiedState(id).drafts[draft.id].title,'공통 초안');assert.equal(engineB.unifiedState(id).chat_sessions[chat.id].title,'공통 대화');
+  const browserDevice=randomUUID();await api('POST',`/workspaces/${id}/devices`,{device_id:browserDevice,name:'Synthetic browser',platform:'web'});
+  const doc=boot.state.entries[initialEntry.id].document_id;
+  async function webVersion(text){
+    const current=await api('GET',`/workspaces/${id}/bootstrap`),document=current.state.documents[doc],bytes=Buffer.from(text),blob={id:randomUUID(),sha256:createHash('sha256').update(bytes).digest('hex'),size:bytes.length,mime_type:'text/markdown'};
+    const ticket=await api('POST',`/workspaces/${id}/blobs/prepare`,blob);if(!ticket.verified){const upload=await fetch(ticket.upload_url,{method:'PUT',headers:ticket.headers,body:bytes});assert.ok(upload.ok);await api('POST',`/workspaces/${id}/blobs/complete`,{id:blob.id});}
+    const version={id:randomUUID(),workspace_id:id,document_id:doc,blob,parent_version_ids:[document.content_head_id],sources:[],created_at:new Date().toISOString(),created_by:fixture.user.id,change_note:'웹 저장'};
+    const command={schema_version:2,operation_id:randomUUID(),workspace_id:id,device_id:browserDevice,workspace_epoch:current.epoch,type:'AppendDocumentVersion',payload:{version,select_head:true},base_revisions:{[`documents:${doc}`]:document.revision}};
+    const result=await api('POST',`/workspaces/${id}/commands`,{commands:[command]});assert.equal(result.results[0].status,'applied',JSON.stringify(result));return version;
+  }
+  const webB=await webVersion('# 웹 수정 B');
+  const webAppliedA=await transferA.start(id);assert.equal(webAppliedA.phase,'complete',JSON.stringify({status:webAppliedA,conflicts:engineA.unifiedConflicts(id)}));const webAppliedB=await transferB.start(id);assert.equal(webAppliedB.phase,'complete',JSON.stringify({status:webAppliedB,conflicts:engineB.unifiedConflicts(id)}));
+  assert.equal(await readFile(path.join(rootA,'중첩','문서.md'),'utf8'),'# 웹 수정 B');assert.equal(await readFile(path.join(rootB,'중첩','문서.md'),'utf8'),'# 웹 수정 B');assert.equal(engineA.unifiedState(id).documents[doc].content_head_id,webB.id);
+  await writeFile(path.join(rootA,'중첩','문서.md'),'# 오프라인 수정 B-local');await engineA.unifiedPrepare(id);
+  const offline=Object.values(engineA.unifiedState(id).versions).find(v=>v.blob.sha256===createHash('sha256').update('# 오프라인 수정 B-local').digest('hex'));assert.ok(offline);
+  const webC=await webVersion('# 다른 기기 수정 C');
+  const conflicted=await transferA.start(id);assert.equal(conflicted.phase,'conflict',JSON.stringify(conflicted));
+  boot=await api('GET',`/workspaces/${id}/bootstrap`);assert.ok(boot.state.versions[offline.id]);assert.ok(boot.state.versions[webC.id]);assert.equal(boot.state.documents[doc].content_head_id,webC.id);
+  assert.equal(await readFile(path.join(rootA,'중첩','문서.md'),'utf8'),'# 오프라인 수정 B-local');
+  const conflict=engineA.unifiedConflicts(id).find(c=>c.entity_id===doc);assert.ok(conflict);
+  await engineA.unifiedResolve(id,'ResolveConflict',{id:conflict.id,resolution:'keep_current'},conflict.base_revisions);await transferA.start(id);
+  assert.equal(await readFile(path.join(rootA,'중첩','문서.md'),'utf8'),'# 다른 기기 수정 C');
+  await transferB.start(id);assert.equal(await readFile(path.join(rootB,'중첩','문서.md'),'utf8'),'# 다른 기기 수정 C');
+  await writeFile(path.join(rootA,'중첩','문서.md'),'# 응답 유실 D');lose=true;
+  await assert.rejects(transferA.start(id),/synthetic lost ACK/);const pending=engineA.unifiedPending(id);assert.ok(pending.length);const pendingOperation=pending[0].command.operation_id;
+  const versionsBefore=Object.keys((await api('GET',`/workspaces/${id}/bootstrap`)).state.versions).length;
+  await engineA.close();engineA=await new WorkspaceEngine(dataA).init({watchFiles:false});lose=false;transferA=new UnifiedTransfer(connections,callA,{fetcher});await transferA.start(id);
+  assert.equal(engineA.unifiedPending(id).length,0);assert.equal(Object.keys((await api('GET',`/workspaces/${id}/bootstrap`)).state.versions).length,versionsBefore);assert.equal(await readFile(path.join(rootA,'중첩','문서.md'),'utf8'),'# 응답 유실 D');
+  const echo=await api('GET',`/workspaces/${id}/changes?after=0&limit=1000`);assert.equal(echo.changes.filter(e=>e.operation_id===pendingOperation).length,1);
+  let matched = false;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await transferA.start(id); await transferB.start(id);
+    const canonical = await api('GET', `/workspaces/${id}/bootstrap`);
+    if (engineA.unifiedIdentity(id).cursor !== canonical.cursor || engineB.unifiedIdentity(id).cursor !== canonical.cursor) continue;
+    assert.deepEqual(engineA.unifiedState(id), canonical.state, 'SQLite PC-A must match every PostgreSQL canonical entity');
+    assert.deepEqual(engineB.unifiedState(id), canonical.state, 'SQLite PC-B must match every PostgreSQL canonical entity');
+    matched = true; break;
+  }
+  assert.equal(matched, true, 'Both devices must reach one committed canonical cursor');
+  const detached=await transferB.detach(id);assert.equal(detached.phase,'paused');assert.equal(engineB.unifiedStatus(id).linked,true);assert.equal(engineB.unifiedStatus(id).paused,true);assert.equal((await transferB.start(id)).phase,'complete');
+  const deviceB=engineB.unifiedIdentity(id).device_id;await api('DELETE',`/workspaces/${id}/devices/${deviceB}`);
+  await assert.rejects(transferB.start(id),reason=>reason.code==='DEVICE_DETACHED');
+  boot=await api('GET',`/workspaces/${id}/bootstrap`);const del={schema_version:2,operation_id:randomUUID(),workspace_id:id,device_id:browserDevice,workspace_epoch:boot.epoch,type:'DeleteWorkspace',payload:{},base_revisions:{[`workspace:${id}`]:boot.state.workspace.revision}};assert.equal((await api('POST',`/workspaces/${id}/commands`,{commands:[del]})).results[0].status,'applied');
+  const before=await readFile(path.join(rootA,'중첩','문서.md'),'utf8');assert.equal((await transferA.start(id)).phase,'deleted');assert.equal(await readFile(path.join(rootA,'중첩','문서.md'),'utf8'),before);
+  const resurrect=await fetch(`${endpoint}/v2/workspaces`,{method:'POST',headers,body:JSON.stringify({id,name:boot.state.workspace.name,root_entry_id:boot.state.workspace.root_entry_id})});assert.equal(resurrect.status,410);
+});

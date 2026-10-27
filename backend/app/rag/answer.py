@@ -18,10 +18,10 @@ class Answer(BaseModel):
     insufficient: bool
 
 
-def grounded_answer(question, evidence, history):
+def grounded_answer(question, evidence, history, ai=None):
     if not evidence["sources"]:
         return {"claims": [], "insufficient": True}
-    content = AIService().generate(
+    content = (ai or AIService()).generate(
         [
             {
                 "role": "system",

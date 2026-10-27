@@ -61,6 +61,10 @@ class GenerateRequest(StrictModel):
         return value.strip()
 
 
+class BlankRequest(StrictModel):
+    request_id: UUID
+
+
 class SaveRequest(StrictModel):
     revision: int = Field(ge=1)
     content: WritingContent

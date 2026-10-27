@@ -1,0 +1,73 @@
+/* ConText · Blue / Violet · Single source of truth for the application palette. */
+:root {
+  /* Brand colors supplied by the product owner. */
+  --primary: #5B6CFF;
+  --secondary: #7C4DFF;
+  --background: #F7F9FC;
+  --surface: #FFFFFF;
+  --text: #1E293B;
+  --border: #D9E1F2;
+
+  /* Supplied ConText identity. Keep artwork colors distinct from action colors. */
+  --brand-indigo: #6366F1;
+  --brand-violet: #A78BFA;
+  --brand-slate: #334155;
+  --brand-light: #E5EAF6;
+
+  /* Tonal variations: actions, selections, and readable secondary copy. */
+  --primary-strong: #4C5DEB;
+  --primary-hover: #4051D8;
+  --primary-soft: #EDF0FF;
+  --primary-border: #B8C2FF;
+  --secondary-strong: #6540CC;
+  --secondary-soft: #F2EDFF;
+  --secondary-border: #D4C5FF;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --surface-subtle: #F1F5FC;
+  --surface-ai: #FAF8FF;
+  --surface-overlay: #FFFFFFF5;
+  --border-soft: #E8EDF7;
+  --grid: #E6EBF5;
+  --focus: #5B6CFF;
+  --selection-ring: #5B6CFF26;
+  --canvas-glow: #E9EEFF80;
+  --backdrop: #1E293B40;
+  --drop-surface: #EDF0FFF5;
+  --on-primary: #FFFFFF;
+
+  /* Status and file-type colors remain distinguishable from brand accents. */
+  --success: #16765E;
+  --success-soft: #EAF7F1;
+  --success-border: #A4D6C1;
+  --warning: #966019;
+  --warning-soft: #FFF7E8;
+  --warning-border: #E8CE9B;
+  --danger: #B23E58;
+  --danger-soft: #FFF0F3;
+  --danger-hover: #FCE2E9;
+  --danger-border: #ECB8C5;
+  --info: #3568B8;
+  --info-soft: #EDF4FF;
+  --info-border: #B5CFF3;
+  --diff-added: #175938;
+  --diff-added-bg: #D5F2E1;
+  --diff-removed: #842B32;
+  --diff-removed-bg: #FFE0E2;
+  --citation-highlight: #FFF7D5;
+  --citation-highlight-border: #D4B44C;
+
+  /* Elevation and accents. */
+  --shadow-color: #1E293B0D;
+  --shadow-elevated-color: #1E293B1F;
+  --action-shadow: #5B6CFF26;
+  --shadow: 0 10px 40px var(--shadow-color);
+  --brand-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+
+  /* Compatibility names used by existing components. */
+  --ink: var(--text);
+  --muted: var(--text-muted);
+  --line: var(--border);
+  --accent: var(--primary-strong);
+  --accent-light: var(--primary-soft);
+}

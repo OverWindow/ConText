@@ -133,6 +133,28 @@ def test_cross_user_isolation_and_team_creation_blocked(client, db):
     assert db.scalar(select(func.count()).select_from(Workspace)) == 1
 
 
+def test_workspace_deletion_is_owner_only_idempotent_and_hides_all_member_access(client, db):
+    owner, editor, viewer, outsider = headers(), headers(), headers(), headers()
+    item = client.post("/api/workspaces", headers=owner, json={"name": "Delete me"}).json()
+    path = f"/api/workspaces/{item['id']}"
+    for auth, role in [(editor, Role.EDITOR), (viewer, Role.VIEWER)]:
+        user_id = UUID(client.get("/api/me", headers=auth).json()["id"])
+        db.add(WorkspaceMember(workspace_id=UUID(item["id"]), user_id=user_id, role=role))
+    db.commit()
+    assert client.delete(path).status_code == 401
+    assert client.delete(path, headers=outsider).status_code == 404
+    assert client.delete(path, headers=editor).status_code == 403
+    assert client.delete(path, headers=viewer).status_code == 403
+    assert client.delete(path, headers=owner).status_code == 204
+    assert client.delete(path, headers=owner).status_code == 204
+    assert db.get(Workspace, UUID(item["id"])).deleted_at is not None
+    for auth in [owner, editor, viewer, outsider]:
+        assert client.get("/api/workspaces", headers=auth).json() == []
+        for suffix in ["", "/members", "/documents", "/canvas", "/sync-scene", "/writing"]:
+            assert client.get(path + suffix, headers=auth).status_code == 404
+    assert client.post("/api/workspaces", headers=owner, json={"name": "New"}).status_code == 201
+
+
 @pytest.mark.parametrize("role,status", [(Role.OWNER, 201), (Role.EDITOR, 201), (Role.VIEWER, 403)])
 def test_existing_team_roles(client, db, role, status):
     owner, member = headers(), headers()

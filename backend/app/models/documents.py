@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
@@ -46,6 +47,14 @@ class Document(Identity, Timestamps, Base):
             deferrable=True,
             initially="DEFERRED",
         ),
+        ForeignKeyConstraint(
+            ["id", "file_version_id"],
+            ["document_versions.document_id", "document_versions.id"],
+            name="fk_document_file_version",
+            use_alter=True,
+            deferrable=True,
+            initially="DEFERRED",
+        ),
     )
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
@@ -54,6 +63,10 @@ class Document(Identity, Timestamps, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     upload_request_id: Mapped[uuid.UUID] = mapped_column(Uuid)
     current_version_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    file_version_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    current_is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1")
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     versions: Mapped[list[DocumentVersion]] = relationship(
         foreign_keys="DocumentVersion.document_id",
         order_by="DocumentVersion.version_number",
@@ -70,7 +83,7 @@ class DocumentVersion(Identity, Base):
         Index("ix_document_versions_fingerprint", "sha256", "size"),
         UniqueConstraint("document_id", "version_number", name="uq_document_version_number"),
         UniqueConstraint("document_id", "id", name="uq_document_version_identity"),
-        CheckConstraint("size > 0", name="ck_document_version_size"),
+        CheckConstraint("size >= 0", name="ck_document_version_size"),
         CheckConstraint("version_number > 0", name="ck_document_version_number"),
     )
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))

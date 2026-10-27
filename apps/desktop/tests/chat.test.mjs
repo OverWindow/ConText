@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { WorkspaceEngine } from '../electron/engine.mjs';
+
+const available = existsSync(new URL('../processor/dist/context-processor/context-processor', import.meta.url));
+test('local chat persists source-bound replies, rejects cross-workspace access and marks interrupted requests', { skip: !available }, async t => {
+  const base = await mkdtemp(path.join(os.tmpdir(), 'context-chat-'));
+  const root = path.join(base, '자료'), otherRoot = path.join(base, '다른 자료');
+  await mkdir(root); await mkdir(otherRoot); await writeFile(path.join(root, '예산.md'), '# 예산\n예산은 100만원입니다.');
+  const data = path.join(base, 'data'); let engine = await new WorkspaceEngine(data).init({ watchFiles: false });
+  t.after(async () => { if (!engine.closed) await engine.close(); await rm(base, { recursive: true, force: true }); });
+  const wid = (await engine.connect(root)).workspace.id, other = (await engine.connect(otherRoot)).workspace.id;
+  const input = { requestId: randomUUID(), title: '예산 질문' };
+  const session = engine.createChatSession(wid, input);
+  assert.equal(engine.createChatSession(wid, input).id, session.id);
+  assert.throws(() => engine.chatMessages(other, session.id));
+  const question = { requestId: randomUUID(), question: '예산', scope: 'current', as_of: null };
+  const prepared = await engine.prepareChat(wid, session.id, question);
+  assert.match(prepared.sources[0].text, /예산/);
+  assert.equal((await engine.prepareChat(wid, session.id, question)).existing.state, 'RUNNING');
+  assert.throws(() => engine.finishChat(wid, session.id, prepared, { claims: [{ text: '조작한 답변', source_ids: ['unknown'] }], insufficient: false }));
+  const result = engine.finishChat(wid, session.id, prepared, { claims: [{ text: '예산은 100만원입니다.', source_ids: [prepared.sources.find(source => source.text.includes('100만원')).id] }], insufficient: false });
+  assert.equal(result.state, 'COMPLETED');
+  assert.equal(engine.chatMessages(wid, session.id).length, 2);
+  await engine.prepareChat(wid, session.id, { ...question, requestId: randomUUID(), question: '예산 확인' });
+  await engine.close(); engine = await new WorkspaceEngine(data).init({ watchFiles: false });
+  const messages = engine.chatMessages(wid, session.id);
+  assert.equal(messages[1].content, '예산은 100만원입니다.');
+  assert.equal(messages[3].state, 'FAILED'); assert.equal(messages[3].error_code, 'WORKER_INTERRUPTED');
+  const retry = await engine.prepareChatRetry(wid, session.id, messages[3].id);
+  assert.equal(retry.messageId, messages[3].id);
+  assert.notEqual(retry.request_id, prepared.request_id);
+});
