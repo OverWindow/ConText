@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LuArrowUp, LuCheck, LuDownload, LuFilePenLine, LuPlus, LuSave, LuTrash2, LuUndo2, LuX } from "react-icons/lu";
 import { BlockEditor, type EditorHandle } from "./block-editor";
-import { blockText, type WritingDraft, type DraftRepository } from "./types";
+import { blockText, type WritingDraft, type DraftRepository, type ExportFormat } from "./types";
 import "./writing.css";
 
-export function DraftStudio({ workspace, repository, onClose, initialDraftId, onAISettings }: { workspace: { id: string; name: string; role: "OWNER" | "EDITOR" | "VIEWER" }; repository: DraftRepository; onClose: () => void; initialDraftId?: string; onAISettings?: () => void }) {
+export function DraftStudio({ workspace, repository, onClose, initialDraftId, onAISettings, exportFormats = ['docx', 'hwpx'] }: { workspace: { id: string; name: string; role: "OWNER" | "EDITOR" | "VIEWER" }; repository: DraftRepository; onClose: () => void; initialDraftId?: string; onAISettings?: () => void; exportFormats?: ExportFormat[] }) {
   const [drafts, setDrafts] = useState<{ id: string; title: string }[]>([]);
   const [draft, setDraft] = useState<WritingDraft | null>(null);
   const [title, setTitle] = useState("");
@@ -90,7 +90,7 @@ export function DraftStudio({ workspace, repository, onClose, initialDraftId, on
       request.current = null;
     });
   }
-  async function download(format: "docx" | "hwpx") {
+  async function download(format: ExportFormat) {
     await run(`${format.toUpperCase()} 파일을 만들고 있습니다…`, async () => {
       const current = await save();
       await repository.export(current.id, current.revision, format);
@@ -130,8 +130,7 @@ export function DraftStudio({ workspace, repository, onClose, initialDraftId, on
             <span aria-live="polite">{dirty ? "저장하지 않은 변경" : `저장됨 · 버전 ${draft.revision}`}</span>
             <button disabled={!!busy || !dirty || !editable} onClick={() => void run("저장 중…", async () => { await save(); })}><LuSave /> 저장</button>
             <button disabled={!!busy || dirty || !draft.can_undo || !editable} onClick={() => void review("undo")}><LuUndo2 /> 되돌리기</button>
-            <button disabled={!!busy} onClick={() => void download("docx")}><LuDownload /> DOCX</button>
-            <button disabled={!!busy} onClick={() => void download("hwpx")}><LuDownload /> HWPX</button>
+            {exportFormats.map(format => <button key={format} disabled={!!busy} onClick={() => void download(format)}><LuDownload /> {format.toUpperCase()}</button>)}
             {editable && <button className="writing-delete-button" disabled={!!busy} onClick={() => setConfirmDelete(true)}><LuTrash2 /> 문서 삭제</button>}
           </div>
           {draft.proposal && <section className="writing-review" aria-label="AI 수정안 검토">

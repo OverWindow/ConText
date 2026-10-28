@@ -16,6 +16,8 @@ import type { TextDocument } from '@context/workspace-ui/shared/core/text';
 import type { CanvasElement, CanvasRelation } from '@context/workspace-ui/shared/core/canvas';
 import type { ConversionJob, ConversionFormat } from '@context/workspace-ui/shared/core/conversions';
 export interface DesktopAPI {
+  sampleGenerate(input: import('@context/workspace-ui/sample-ai').SampleAIRequest): Promise<unknown>;
+  sampleExport(content: WritingContent, format: ExportFormat): Promise<{ data: string }>;
   cloudList(): Promise<CloudWorkspace[]>;
   cloudAttach(workspaceId: string): Promise<Snapshot | null>;
   cloudConflicts(id: string): Promise<CloudConflict[]>;

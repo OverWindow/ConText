@@ -471,7 +471,6 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
     for (const [id, owner] of membership.owner) folders.owner.set(id, owner);
     for (const [id, members] of membership.members) folders.members.set(id, members);
   }
-  const isAncestor = (entry: Entry) => entry.kind === 'directory' && (entry.relative_path === directory || directory.startsWith(entry.relative_path + '/'));
   const physicallyHidden = (entry: Entry) => !flat && !referenceMode && visibility.hidden(logicalOwners.get(entry.id) || layout.placements.get(entry.id)?.parentId);
   const elementNodes = projectedElements.map(node => ({ ...node, hidden: flat || visibility.hidden(logicalOwners.get(node.id) || node.parentId), draggable: interactive, data: { ...node.data, editable: interactive, folder: node.data.element.kind === 'rectangle' ? {
     titles: (folders.members.get(node.id) || []).map(n => n.data.entry.name), overview: !visibility.opened.has(node.id),
@@ -488,7 +487,7 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
   const saved = snapshot.views.find(view => view.directory === spatialView);
   const renderedEntries: EntryNode[] = nodes.map(node => {
     const entry = node.data.entry;
-    if (node.type === 'directory') return { ...node, hidden: physicallyHidden(entry), draggable: interactive && !isAncestor(entry), connectable: false, data: { ...node.data, editable: editing && !referenceMode, dropTarget: dropFolder === node.id, folder: { titles: (children.get(entry.relative_path) || []).map(e => e.name), overview: !visibility.opened.has(entry.id), open: node.data.open, select: () => {} } } };
+    if (node.type === 'directory') return { ...node, hidden: physicallyHidden(entry), draggable: interactive, connectable: false, data: { ...node.data, editable: editing && !referenceMode, dropTarget: dropFolder === node.id, folder: { titles: (children.get(entry.relative_path) || []).map(e => e.name), overview: !visibility.opened.has(entry.id), open: node.data.open, select: () => {} } } };
     return { ...node, hidden: physicallyHidden(entry) || !!pendingFile && (pendingFile.hideNew || entry.name === pendingFile.name) && entry.parent_path === pendingFile.directory && !pendingFile.existing.has(entry.id), draggable: interactive, connectable: interactive, data: { ...node.data, copy: async (source: Entry, requestId: string, versionId?: string) => { await insertFile(() => api.copyFile(workspaceId, source.id, requestId, versionId), source.name + ' copy', source); }, referenced: referenceIds.includes(node.id), connections: relations.filter(r => r.source_document_id === node.id || r.target_document_id === node.id).length } };
   });
   const hiddenEntries = new Set(renderedEntries.filter(node => node.hidden).map(node => node.id));

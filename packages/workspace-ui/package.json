@@ -82,7 +82,8 @@
     "./account-control.css": "./src/account-control.css",
     "./sync-control.css": "./src/sync-control.css",
     "./document-preview-layout": "./src/document-preview-layout.tsx",
-    "./sample-workspace": "./src/sample-workspace.tsx"
+    "./sample-workspace": "./src/sample-workspace.tsx",
+    "./sample-ai": "./src/sample-ai.ts"
   },
   "peerDependencies": {
     "react": "19.3.0",

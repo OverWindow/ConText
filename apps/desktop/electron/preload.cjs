@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('contextDesktop', {
   saveAIConnection: value => invoke('saveAIConnection', value),
   removePersonalAI: () => invoke('removePersonalAI'),
   aiModels: () => invoke('aiModels'),
+  sampleGenerate: input => invoke('sampleGenerate', input),
+  sampleExport: (content, format) => invoke('sampleExport', content, format),
   aiLogin: () => invoke('aiLogin'),
   aiLogout: () => invoke('aiLogout'),
   aiCancelLogin: () => invoke('aiCancelLogin'),

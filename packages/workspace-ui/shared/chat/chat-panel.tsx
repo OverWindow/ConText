@@ -23,6 +23,8 @@ const errorLabels: Record<string, string> = {
   ACCESS_REVOKED: "워크스페이스 접근 권한이 변경되었습니다.",
 };
 const warningLabels: Record<string, string> = {
+  SAMPLE_HISTORY_UNAVAILABLE: "샘플에는 기준일별 수정 이력이 없습니다. 현재 수정 이력으로 질문해 주세요.",
+  SAMPLE_CURRENT_ONLY: "샘플은 현재 수정 이력 한 개만 제공합니다.",
   INDEX_INCOMPLETE: "일부 문서의 색인이 완료되지 않아 검색에서 빠질 수 있습니다.",
   SEMANTIC_UNAVAILABLE: "의미 검색을 사용할 수 없어 텍스트로 검색했습니다.",
 };

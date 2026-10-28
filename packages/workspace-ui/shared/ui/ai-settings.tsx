@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { AIConnectionRepository, AIConnectionState } from '../core/ai';
 import './ai-settings.css';
 
-export function AISettings({ repository, onClose }: { repository: AIConnectionRepository; onClose: () => void }) {
+export function AISettings({ repository, onClose, onSignIn }: { repository: AIConnectionRepository; onClose: () => void; onSignIn?: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [state, setState] = useState<AIConnectionState>();
   const [key, setKey] = useState('');
@@ -27,6 +27,7 @@ export function AISettings({ repository, onClose }: { repository: AIConnectionRe
   return <dialog ref={dialog} className="ai-settings" aria-label="AI 연결 설정" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
     <header><h2>AI 연결 설정</h2><button aria-label="AI 설정 닫기" disabled={busy} onClick={onClose}>닫기</button></header>
     {error && <p className="error" role="alert">{error}</p>}
+    {!state && error && onSignIn && <button onClick={onSignIn}>로그인하고 AI 연결하기</button>}
     {notice && <p role="status">{notice}</p>}
     {state ? <>
       <label>연결 방식<select aria-label="AI 연결 방식" value={state.mode} disabled={busy} onChange={event => { setState({ ...state, mode: event.target.value as AIConnectionState['mode'], model: '' }); setModels([]); }}><option value="managed">기본 ChatKHU</option><option value="personal">내 ChatKHU</option></select></label>

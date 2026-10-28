@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { AIConnections, DESKTOP_AUTH_SCHEME } from './ai-connections.mjs';
 import { DesktopAccount } from './account.mjs';
 import { UnifiedTransfer } from './unified-transfer.mjs';
+import { generateSample, sampleExportContent } from './sample-ai.mjs';
+import { runProcessor } from './processor.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const assets = path.resolve(here, '../dist');
@@ -188,6 +190,8 @@ async function start() {
   handle('saveAIConnection', async value => { const state = await ai.update(value); await account.publish(); return state; });
   handle('removePersonalAI', () => ai.removePersonal());
   handle('aiModels', () => ai.models());
+  handle('sampleGenerate', input => generateSample(ai, input));
+  handle('sampleExport', (content, format) => runProcessor({ operation: 'export', content: sampleExportContent(content, format), format }, { resourcesPath: app.isPackaged ? process.resourcesPath : undefined }));
   handle('aiLogin', async () => { await account.login(); return ai.summary(); });
   handle('aiLogout', async () => { await account.logout(); return ai.summary(); });
   handle('aiCancelLogin', () => account.cancel());

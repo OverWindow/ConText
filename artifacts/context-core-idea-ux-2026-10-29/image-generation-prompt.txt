@@ -1,0 +1,13 @@
+Generation method: built-in image_gen
+Visual review: Korean headings, four journey stages, source citation, draft-only AI application, TXT/MD storage and separate export labels checked.
+
+Use case: infographic-diagram
+Asset type: One finished Korean product proposal illustration for section "핵심 아이디어와 사용자 경험" about ConText.
+Primary request: Create a beautifully polished, flat editorial infographic with four detailed UI vignettes showing the user journey of a LOCAL DOCUMENT WORKSPACE. This is an explanatory conceptual illustration, not an actual screenshot. Wide landscape 16:9, high resolution, crisp perfectly readable Korean typography. Warm white #FAF8F5 background, charcoal #2A2526 text, crimson #A40F16 accent, muted wine #7C334B, light rose #F8E9E9. Restrained professional product pitch aesthetic, generous spacing, thin borders, soft corners, no people or robots, no photos or 3D, no browser perspective, no invented logo.
+Composition: At top small text wordmark "ConText", large headline "내 문서와 AI가 함께 일하는 공간", subtitle "쓰던 폴더에서 시작해, 근거 있는 답변과 문서 완성까지". Beneath, four equal large panels horizontally, with subtle arrows between them, numbered 01 to 04 and mini application UI inside each. Layout is carefully aligned and Korean text is large; omit tiny text. Each panel uses a small heading and support sentence below its UI.
+Panel 01 heading "내 폴더에서 자료 탐색", support "폴더 연결 · 파일 열기 · 본문 검색". Mini UI shows a selected folder "프로젝트 자료" with readable file cards "회의록.md", "기획안.docx", "참고자료.pdf" and a search field "자료 검색".
+Panel 02 heading "AI 질문과 출처 확인", support "내 자료로 묻고 답변의 근거 확인". Mini chat UI shows question "회의록의 할 일을 정리해 줘" and a concise answer with "기획안 정리" and "발표 자료 준비", followed by a clear wine-colored source pill "출처: 회의록.md". These are illustrative examples.
+Panel 03 heading "초안 작성과 수정안 검토", support "자료 기반 초안 생성 · 비교 · 적용". Mini document editor heading "업무 정리 초안", with short numbered tasks and a small before/after diff area labeled "수정 전" and "수정 후" using restrained red/green highlights, plus a crimson button "초안에 적용". This edits a NEW DRAFT, never depict AI overwriting the original source.
+Panel 04 heading "저장하고 작업 이어가기", support "TXT·MD 직접 저장 · 문서 내보내기". Mini UI shows two clear options, "텍스트 원본 저장" with small badge "TXT · MD", and "초안 내보내기" with small badge "별도 파일". A small file icon labeled "업무 정리" completes the journey. No claim that docx/pdf sources can be directly overwritten by AI.
+Bottom full width slim strip: "파일과 작업 기록은 내 PC에 · AI는 ChatKHU로 연결". Small footer at bottom right: "사용자 경험 설명용 예시".
+All text must be accurate Korean and clearly legible. This is one single finished explanatory image, not a deck. Keep all copy in frame with wide safe margins.

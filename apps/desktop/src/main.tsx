@@ -11,6 +11,7 @@ import brandSymbol from '@context/workspace-ui/assets/context-symbol.png';
 import brandLogo from '@context/workspace-ui/assets/context-logo.png';
 import { DraftStudio } from '@context/workspace-ui/shared/writing/draft-studio';
 import { localDraftRepository, desktopAIRepository } from './draft-repository';
+import { desktopSampleAI } from './sample-ai';
 import { AISettings } from '@context/workspace-ui/shared/ui/ai-settings';
 import { LocalDocumentPreview } from './document-preview';
 import type { DocumentReference } from '@context/workspace-ui/shared/core/chat';
@@ -172,7 +173,7 @@ function App() {
   }
   const matchCount = snapshot?.entries.filter(entry => query ? entry.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) : entry.parent_path === directory).length || 0;
   const canvasCount = query ? matchCount : snapshot?.entries.length || 0;
-  if (sample) return <Suspense fallback={<div className="center-state"><p role="status">샘플 워크스페이스를 여는 중…</p></div>}><SampleWorkspace navigation={{ logo: brandLogo, symbol: brandSymbol, spaces: [], onHome: () => { setSample(false); setHome(true); }, account: <DesktopAccountControl /> }} /></Suspense>;
+  if (sample) return <Suspense fallback={<div className="center-state"><p role="status">샘플 워크스페이스를 여는 중…</p></div>}><SampleWorkspace ai={desktopSampleAI} navigation={{ logo: brandLogo, symbol: brandSymbol, spaces: [], onHome: () => { setSample(false); setHome(true); }, account: <DesktopAccountControl /> }} /></Suspense>;
   const workspaceChrome = <>
       <ApplicationToolbar name={snapshot?.workspace.label || '나의 워크스페이스'} directory={directory} onHome={snapshot ? () => { void changeDirectory(''); } : undefined} query={query} onQuery={snapshot ? value => void changeQuery(value) : undefined} onRefresh={snapshot ? () => void action(async () => setSnapshot(await api.refresh(snapshot.workspace.id))) : undefined} onSettings={snapshot ? () => setSettings(!settings) : undefined} onCreate={snapshot ? () => setNewFile(true) : undefined} busy={busy} toolsRef={setCanvasToolbarHost} sync={snapshot && <CloudControl key={snapshot.workspace.id} workspaceId={snapshot.workspace.id} flush={async () => canvasFlush.current ? canvasFlush.current() : true} />} />
       {problem && <div className="notice error" role="alert">{problem}<button className="icon-button" aria-label="오류 닫기" onClick={() => setProblem('')}><LuX /></button></div>}
