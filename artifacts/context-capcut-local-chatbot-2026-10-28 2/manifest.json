@@ -1,0 +1,180 @@
+{
+  "theme": "Crimson / Warm White / Charcoal",
+  "positioning": "내 문서와 AI가 함께 일하는 공간 · 내 PC에서 시작하는 AI 문서 작업 공간",
+  "assets": [
+    {
+      "file": "png/01-opening.png",
+      "title": "내 문서와 AI가 함께 일하는 공간",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "4ae16084f4d0597f11d076fdb2c2fe934a4db9d879476bb8ae38ed0c74442945"
+    },
+    {
+      "file": "png/02-problem.png",
+      "title": "문서와 AI 사이의 반복",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "802d081c6121c5cef4137b558058c9147e8dc96faf9743adb6b84a1984ce6a51"
+    },
+    {
+      "file": "png/03-core-promise.png",
+      "title": "내 자료를 중심으로 찾고 묻고 쓰기",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "aed02bf0c40b4ba86283b501e9925ce6efd6c59a496e94567d0719d3d3bf5bab"
+    },
+    {
+      "file": "png/04-my-folder.png",
+      "title": "쓰던 폴더가 AI 작업의 시작점",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "d094354edea72dc46f54a04aa0deb208f241070d662d2e7347cbaea9c5bb109f"
+    },
+    {
+      "file": "png/05-file-chat.png",
+      "title": "내 자료로 질문하고 근거 확인",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "9fdfb1ee6a42bffd18b41accc2703484a988254175395e6fa7d1c9877247792f"
+    },
+    {
+      "file": "png/06-meeting-tasks.png",
+      "title": "회의록에서 업무 정리 초안으로",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "초안 작성·수정 예시 · 설명용 합성 그래픽",
+      "sha256": "edc2b48ba139762ee5d621c0be605c93e7357ac709e356973dc824a4a41ac51c"
+    },
+    {
+      "file": "png/07-refine-writing.png",
+      "title": "초안의 문장을 더 명확하게",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "초안 작성·수정 예시 · 설명용 합성 그래픽",
+      "sha256": "99017362816feb8ec229266f3f7fce3e5b9c5cd1a53be6415a361296ec227064"
+    },
+    {
+      "file": "png/08-memo-checklist.png",
+      "title": "메모에서 체크리스트 초안으로",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "초안 작성·수정 예시 · 설명용 합성 그래픽",
+      "sha256": "bc6a8e1492badf198448bf7bdb6b1c999a5515f37d96822cb17663460210ad33"
+    },
+    {
+      "file": "png/09-review-apply.png",
+      "title": "초안에서 수정안 비교하고 적용",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "초안 작성·수정 예시 · 설명용 합성 그래픽",
+      "sha256": "4ab70ffb7d1eeabb1af0baa7cede88d9e4e20427e39072cc23a6cbf9f9a32dff"
+    },
+    {
+      "file": "png/10-same-file.png",
+      "title": "익숙한 파일에서 작업 계속",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "TXT·Markdown 직접 편집 예시 · 자동 AI 원본 적용 아님",
+      "sha256": "de008528f5dd5c1d798191fdc626e3ca2c9fb62de14e985d638de2e461632e0f"
+    },
+    {
+      "file": "png/11-local-and-ai.png",
+      "title": "로컬 문서 환경과 ChatKHU 연결",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "96fe408a0bc1d18bfe038e53c10efeec0796c381b58b9df1a32f7d8d76c00de9"
+    },
+    {
+      "file": "png/12-ending.png",
+      "title": "내 문서와 AI가 함께 일하는 공간",
+      "width": 1920,
+      "height": 1080,
+      "transparent": false,
+      "status": "제품 소개 그래픽",
+      "sha256": "44b4a2dd7cdea8f19bc95381416fdb9b64618f3a32e843613ebadcfe814e12d5"
+    },
+    {
+      "file": "png/13-label-my-folder.png",
+      "title": "내 폴더에서 시작",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "0bf922349e0c014c84c581f1b154929cc3ac32a3a731bc08aa8b276935c155f4"
+    },
+    {
+      "file": "png/14-label-file-chat.png",
+      "title": "내 자료로 AI 질문",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "f480584fa8da1fa8d69fa392b86867b1a966c497c694d01fa9c9073903b2bc35"
+    },
+    {
+      "file": "png/15-label-request-edit.png",
+      "title": "자료로 초안 작성",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "281cd9721daec14bfc72e340c7ae0b02149181c236cdb4e898e8b852a0f666dc"
+    },
+    {
+      "file": "png/16-label-review.png",
+      "title": "초안 수정안 비교",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "0fe1af774838ee5c26f745e15073e80e472eb93e2060b9ded6b68058777c35a7"
+    },
+    {
+      "file": "png/17-label-apply.png",
+      "title": "파일에서 작업 계속",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "232379aef400aa223f1a27c2251a005622e1f0c3dd0349c72d2ea4cafe70dbd3"
+    },
+    {
+      "file": "png/18-label-local.png",
+      "title": "나의 로컬 문서 환경",
+      "width": 1920,
+      "height": 1080,
+      "transparent": true,
+      "status": "현재 기능 시연용 챕터 라벨",
+      "sha256": "869027411120a6c15f6550ed9c4f65ba2931281e09decae70e6412259fc86b4c"
+    }
+  ],
+  "validation": {
+    "png_count": 18,
+    "full_frame_count": 12,
+    "transparent_overlay_count": 6,
+    "resolution": "1920x1080",
+    "aspect_ratio": "16:9",
+    "html_layout_overflow_check": "passed",
+    "visual_review": "passed",
+    "alpha_pixel_check": "passed",
+    "sha256_check": "passed",
+    "visual_review_scope": "12 full-frame cards and 6 overlays; opener spacing corrected and reviewed"
+  }
+}

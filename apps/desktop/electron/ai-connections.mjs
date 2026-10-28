@@ -5,6 +5,8 @@ import path from 'node:path';
 import { accountProfile, sessionTokens } from './auth-profile.mjs';
 
 const GATEWAY = 'https://factchat-cloud.mindlogic.ai/v1/gateway';
+export const DESKTOP_AUTH_SCHEME = 'context-desktop';
+const SERVER_CALLBACK_PATH = '/api/desktop/auth/callback';
 const defaultConfig = () => ({ mode: 'managed', model: '', serverBaseUrl: '', personalKey: null, session: null, auth: null });
 function connectionError(message, code) { const error = new Error(message); error.code = code; return error; }
 
@@ -117,7 +119,7 @@ export class AIConnections {
     this.pendingLogin = true; this.loginCancelled = false; this.loginAbort = new AbortController();
     try { return await this.loginOnce(); }
     catch (error) { if (this.loginCancelled) throw Object.assign(new Error('계정 연결을 취소했습니다.'), { code: 'AUTH_LOGIN_CANCELLED' }); throw error; }
-    finally { this.pendingLogin = false; this.cancelLoginWait = null; this.loginAbort = null; }
+    finally { this.pendingLogin = false; this.cancelLoginWait = null; this.loginCallback = null; this.loginAbort = null; }
   }
   async loginOnce() {
     const config = await this.read();
@@ -127,9 +129,57 @@ export class AIConnections {
     const authURL = new URL(info.supabase_url);
     if (authURL.protocol !== 'https:' || authURL.username || authURL.password || authURL.search || authURL.hash || authURL.pathname !== '/' || typeof info.publishable_key !== 'string' || !info.publishable_key || info.publishable_key.length > 4000) throw new Error('서버 인증 설정이 올바르지 않습니다.');
     const verifier = randomBytes(32).toString('base64url'), challenge = createHash('sha256').update(verifier).digest('base64url');
+    const code = info.desktop_callback_path === SERVER_CALLBACK_PATH
+      ? await this.waitForServerCallback(config.serverBaseUrl, authURL, challenge)
+      : await this.waitForLoopbackCallback(authURL, challenge);
+    const value = await this.fetcher(`${authURL.origin}/auth/v1/token?grant_type=pkce`, { method: 'POST', signal: AbortSignal.any([this.loginAbort.signal, AbortSignal.timeout(15000)]), headers: { apikey: info.publishable_key, 'Content-Type': 'application/json' }, body: JSON.stringify({ auth_code: code, code_verifier: verifier }) });
+    const tokens = sessionTokens(value);
+    const user = accountProfile(await this.fetcher(`${config.serverBaseUrl}/api/me`, { signal: AbortSignal.any([this.loginAbort.signal, AbortSignal.timeout(15000)]), headers: { Authorization: `Bearer ${value.access_token}` } }));
+    return this.serialize(async () => {
+      const current = await this.read();
+      if (this.loginCancelled || current.serverBaseUrl !== config.serverBaseUrl) throw new Error('계정 연결 설정이 변경되었습니다. 다시 연결해 주세요.');
+      current.auth = { url: authURL.origin, key: info.publishable_key,
+        ...(info.unified_api_url ? { unified_api_url: serverURL(info.unified_api_url) } : {}),
+        ...(info.web_base_url ? { web_base_url: serverURL(info.web_base_url) } : {}) };
+      current.session = { identity: randomUUID(), ...tokens, email: user.email, user };
+      await this.persist(current); return this.summary();
+    });
+  }
+  handleLoginCallback(target) {
+    if (typeof target !== 'string' || target.length > 8192 || !this.loginCallback) return false;
+    let url; try { url = new URL(target); } catch { return false; }
+    if (url.protocol !== `${DESKTOP_AUTH_SCHEME}:` || url.hostname !== 'auth' || url.pathname !== '/callback' || url.username || url.password || url.port || url.hash) return false;
+    return this.loginCallback(url);
+  }
+  waitForServerCallback(serverBaseUrl, authURL, challenge) {
+    const state = randomBytes(24).toString('hex');
+    const redirect = new URL(`${SERVER_CALLBACK_PATH}/${state}`, serverBaseUrl);
+    return new Promise((resolve, reject) => {
+      let finished = false;
+      const finish = (error, code) => {
+        if (finished) return; finished = true; clearTimeout(timeout);
+        this.cancelLoginWait = null; this.loginCallback = null;
+        error ? reject(error) : resolve(code);
+      };
+      const timeout = setTimeout(() => finish(new Error('계정 연결 시간이 지났습니다. 앱에서 다시 로그인해 주세요.')), 5 * 60 * 1000);
+      this.cancelLoginWait = () => finish(new Error('계정 연결을 취소했습니다.'));
+      this.loginCallback = url => {
+        if (url.searchParams.getAll('state').length !== 1 || url.searchParams.get('state') !== state) return false;
+        const codes = url.searchParams.getAll('code'), errors = url.searchParams.getAll('error');
+        if (errors.length === 1 && codes.length === 0) { finish(new Error('Google 계정 연결을 취소했거나 완료하지 못했습니다.')); return true; }
+        if (codes.length !== 1 || errors.length || !codes[0] || codes[0].length > 2048 || /[\u0000-\u001f\u007f]/.test(codes[0])) return false;
+        finish(null, codes[0]); return true;
+      };
+      const url = new URL('/auth/v1/authorize', authURL);
+      url.search = new URLSearchParams({ provider: 'google', prompt: 'select_account', redirect_to: redirect.toString(), code_challenge: challenge, code_challenge_method: 's256' }).toString();
+      try { Promise.resolve(this.openExternal(url.toString())).catch(() => finish(new Error('로그인 브라우저를 열지 못했습니다.'))); }
+      catch { finish(new Error('로그인 브라우저를 열지 못했습니다.')); }
+    });
+  }
+  waitForLoopbackCallback(authURL, challenge) {
     const route = `/callback/${randomBytes(24).toString('hex')}`;
     let server;
-    const code = await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let finished = false;
       const finish = (error, value) => { if (finished) return; finished = true; clearTimeout(timeout); this.cancelLoginWait = null; server.close(); error ? reject(error) : resolve(value); };
       this.cancelLoginWait = () => finish(new Error('계정 연결을 취소했습니다.'));
@@ -149,18 +199,6 @@ export class AIConnections {
         url.search = new URLSearchParams({ provider: 'google', prompt: 'select_account', redirect_to: `http://127.0.0.1:${server.address().port}${route}`, code_challenge: challenge, code_challenge_method: 's256' }).toString();
         Promise.resolve(this.openExternal(url.toString())).catch(() => finish(new Error('로그인 브라우저를 열지 못했습니다.')));
       });
-    });
-    const value = await this.fetcher(`${authURL.origin}/auth/v1/token?grant_type=pkce`, { method: 'POST', signal: AbortSignal.any([this.loginAbort.signal, AbortSignal.timeout(15000)]), headers: { apikey: info.publishable_key, 'Content-Type': 'application/json' }, body: JSON.stringify({ auth_code: code, code_verifier: verifier }) });
-    const tokens = sessionTokens(value);
-    const user = accountProfile(await this.fetcher(`${config.serverBaseUrl}/api/me`, { signal: AbortSignal.any([this.loginAbort.signal, AbortSignal.timeout(15000)]), headers: { Authorization: `Bearer ${value.access_token}` } }));
-    return this.serialize(async () => {
-      const current = await this.read();
-      if (this.loginCancelled || current.serverBaseUrl !== config.serverBaseUrl) throw new Error('계정 연결 설정이 변경되었습니다. 다시 연결해 주세요.');
-      current.auth = { url: authURL.origin, key: info.publishable_key,
-        ...(info.unified_api_url ? { unified_api_url: serverURL(info.unified_api_url) } : {}),
-        ...(info.web_base_url ? { web_base_url: serverURL(info.web_base_url) } : {}) };
-      current.session = { identity: randomUUID(), ...tokens, email: user.email, user };
-      await this.persist(current); return this.summary();
     });
   }
   async models() {

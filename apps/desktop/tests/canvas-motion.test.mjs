@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { creationDirectory, sharedFolder, facingHandles } from '../../../packages/workspace-ui/shared/canvas/file-creation.ts';
 import assert from 'node:assert/strict';
 import { planInsertion } from '../../../frontend/shared/canvas/local-placement.ts';
 import { folderVisibility } from '../../../frontend/shared/canvas/folder-visibility.ts';
@@ -68,4 +69,26 @@ test('zoom remains available after opening a deep folder with heavily fitted con
   const result = folderVisibility([{ id: 'folder', scale: .1, contentScale: .02 }], 5.5);
   assert.equal(result.maxZoom, 100);
   assert.ok(result.opened.has('folder'));
+});
+test('derived files keep the deepest shared physical and logical folder', () => {
+  assert.equal(creationDirectory([{ parent_path: '자료/회의' }, { parent_path: '자료/회의' }]), '자료/회의');
+  assert.equal(creationDirectory([{ parent_path: '자료/회의/이전' }, { parent_path: '자료/회의' }]), '자료/회의');
+  assert.equal(creationDirectory([{ parent_path: '자료/회의' }, { parent_path: '자료/회의록' }]), '자료');
+  assert.equal(creationDirectory([{ parent_path: '' }, { parent_path: '자료' }]), '');
+  const owners = new Map([['a', 'inner'], ['b', 'inner'], ['inner', 'outer'], ['c', 'outer']]);
+  assert.equal(sharedFolder(['a'], owners), 'inner');
+  assert.equal(sharedFolder(['a', 'b'], owners), 'inner');
+  assert.equal(sharedFolder(['a', 'c'], owners), 'outer');
+  assert.equal(sharedFolder(['a', 'outside'], owners), null);
+});
+
+test('summary connections face their sources instead of looping behind either card', () => {
+  const box = (x, y) => ({ x, y, width: 200, height: 244 });
+  assert.deepEqual(facingHandles(box(600, 0), box(0, 0)), { sourceHandle: 'left', targetHandle: 'right' });
+  assert.deepEqual(facingHandles(box(0, 0), box(600, 80)), { sourceHandle: 'right', targetHandle: 'left' });
+  assert.deepEqual(facingHandles(box(0, 600), box(20, 0)), { sourceHandle: 'top', targetHandle: 'bottom' });
+  assert.deepEqual(facingHandles(box(0, 0), box(20, 600)), { sourceHandle: 'bottom', targetHandle: 'top' });
+  assert.deepEqual(facingHandles(box(600, 0), box(0, 0), [box(300, 0)]), { sourceHandle: 'top', targetHandle: 'top', offset: 48 });
+  assert.deepEqual(facingHandles(box(0, 0), box(0, 800), [box(0, 400)]), { sourceHandle: 'left', targetHandle: 'left', offset: 48 });
+  assert.deepEqual(facingHandles(box(600, 0), box(0, 0), [box(300, 500)]), { sourceHandle: 'left', targetHandle: 'right' });
 });

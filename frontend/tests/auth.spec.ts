@@ -30,21 +30,33 @@ test("anonymous workspace routes redirect to login", async ({ page }) => {
 test("public landing offers web access and honest desktop download availability", async ({ page }, info) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("하나의 맥락으로");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("내 문서와 AI가");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("함께 일하는 공간.");
+  await expect(page).toHaveTitle("ConText · 내 PC에서 시작하는 AI 문서 작업 공간");
   await expect(page.getByRole("link", { name: "웹에서 시작하기" }).first()).toHaveAttribute("href", "/workspaces");
   await expect(page.getByRole("link", { name: "데스크톱 다운로드", exact: true })).toHaveAttribute("href", "#start");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await page.screenshot({ path: `/tmp/context-landing-${info.project.name}.png` });
+  const preview = page.getByRole("figure", { name: "AI 문서 작업 흐름 예시" });
+  await expect(preview).toContainText("실제 파일을 읽거나 수정하지 않아요");
+  await preview.getByRole("button", { name: "적용 결과 예시" }).click();
+  await expect(preview.getByRole("status")).toContainText("예시 화면만 변경됐어요");
+  await preview.getByRole("button", { name: "문장 다듬기" }).click();
+  await expect(preview.getByRole("button", { name: "문장 다듬기" })).toHaveAttribute("aria-pressed", "true");
+  await expect(preview).toContainText("프로젝트 소개.txt");
+  await expect(preview.getByRole("button", { name: "적용 결과 예시" })).toBeVisible();
+  await preview.getByRole("button", { name: "회의록 정리" }).click();
 
   await page.getByRole("link", { name: "데스크톱 다운로드", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "원하는 방식으로 시작하세요." })).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "내 컴퓨터에서 시작하세요." })).toBeInViewport();
   await expect(page.getByRole("button", { name: "macOS 다운로드 배포 준비 중" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Windows 다운로드 배포 준비 중" })).toBeDisabled();
-  await expect(page.getByText("계정 연동 · 기기 간 동기화 준비 중")).toBeVisible();
+  await expect(page.getByText("클라우드 동기화는 필요할 때 선택하세요.", { exact: false })).toBeVisible();
   if (info.project.name === "desktop") await page.screenshot({ path: "/tmp/context-landing-downloads-desktop.png" });
-  const syncQuestion = page.locator("summary").filter({ hasText: "문서는 자동으로 연결되나요" });
-  await syncQuestion.click();
-  await expect(page.getByText("아직 자동으로 연결되지 않습니다.", { exact: false })).toBeVisible();
+  await page.locator("summary").filter({ hasText: "기존 파일에 바로 적용할 수 있나요" }).click();
+  await expect(page.getByText("채팅에서 원본 파일에 바로 적용하는 흐름은 준비 중", { exact: false })).toBeVisible();
+  await page.locator("summary").filter({ hasText: "AI도 오프라인으로 실행되나요" }).click();
+  await expect(page.getByText("현재 AI 답변은 인터넷과 별도 AI 연결이 필요", { exact: false })).toBeVisible();
 });
 
 test("web entry from landing follows the existing authentication flow", async ({ page }) => {

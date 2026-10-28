@@ -179,7 +179,7 @@ test('shared canvas tools persist notes, folder geometry and source relations wi
     await page.getByRole('button', { name: '텍스트 추가', exact: true }).click();
     await page.getByRole('textbox', { name: '캔버스 텍스트 내용' }).fill('웹과 같은 캔버스 메모');
     await page.getByLabel('글자 크기', { exact: true }).selectOption('32');
-    await page.getByRole('button', { name: '파랑 색상' }).click();
+    await page.getByRole('button', { name: '크림슨 색상' }).click();
     await expect(page.getByRole('status')).toContainText('텍스트·도형 저장됨');
     await page.getByRole('button', { name: '사각형 폴더 추가', exact: true }).click();
     await page.getByRole('textbox', { name: '폴더 이름 편집', exact: true }).fill('연결한 생각');

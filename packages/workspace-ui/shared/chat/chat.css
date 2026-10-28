@@ -1,4 +1,4 @@
-.chat-panel{position:absolute;right:0;top:0;bottom:0;width:var(--chat-width,400px);display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--surface);color:var(--text);z-index:20;box-shadow:-4px 0 24px var(--shadow-color);overflow:hidden}
+.chat-panel{position:absolute;right:0;top:0;bottom:0;width:var(--chat-width,560px);display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--surface);color:var(--text);z-index:20;box-shadow:-4px 0 24px var(--shadow-color);overflow:hidden}
 .chat-panel[hidden],.chat-launcher[hidden]{display:none}
 .chat-panel.chat-unified .chat-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:64px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border-soft);flex-shrink:0}
 .chat-panel.chat-unified .chat-heading>div{display:flex;align-items:center;gap:12px;min-width:0}
@@ -63,7 +63,7 @@
 
 .chat-panel.chat-unified .chat-sources{margin-top:10px}.chat-panel.chat-unified .chat-sources-toggle{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 7px;border-radius:7px;color:var(--text-muted);font-size:11px;cursor:pointer;list-style:none;user-select:none}.chat-panel.chat-unified .chat-sources-toggle::-webkit-details-marker{display:none}.chat-panel.chat-unified .chat-sources-toggle:hover{color:var(--primary-strong);background:var(--primary-soft)}.chat-panel.chat-unified .chat-sources-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.chat-panel.chat-unified .chat-sources-toggle svg{width:14px;height:14px}.chat-panel.chat-unified .chat-sources[open]>.chat-sources-toggle .chat-sources-chevron{transform:rotate(180deg)}
 
-.chat-drawer{position:absolute;right:0;top:0;bottom:0;width:var(--chat-width,400px);z-index:20;pointer-events:none}
+.chat-drawer{position:absolute;right:0;top:0;bottom:0;width:var(--chat-width,560px);z-index:20;pointer-events:none}
 .chat-drawer[hidden]{display:none}
 .chat-drawer>.chat-panel{pointer-events:auto;transform:translateX(100%);opacity:0;transition:transform 280ms cubic-bezier(.22,1,.36,1),opacity 280ms ease,top 280ms cubic-bezier(.22,1,.36,1)}
 .chat-drawer[data-open=true][data-phase=opening]>.chat-panel,.chat-drawer[data-open=true][data-phase=open]>.chat-panel{transform:translateX(0);opacity:1}

@@ -1,0 +1,80 @@
+{
+  "pages": [
+    {
+      "name": "desktop",
+      "tag": "landing",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    },
+    {
+      "name": "desktop",
+      "tag": "login",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    },
+    {
+      "name": "desktop",
+      "tag": "workspace",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    },
+    {
+      "name": "mobile",
+      "tag": "landing",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    },
+    {
+      "name": "mobile",
+      "tag": "login",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    },
+    {
+      "name": "mobile",
+      "tag": "workspace",
+      "primary": "#A40F16",
+      "background": "#FAF8F5",
+      "text": "#2A2526",
+      "overflow": false,
+      "oldBrandColors": 0
+    }
+  ],
+  "textContrast": [
+    {
+      "label": "primary / white",
+      "contrast": 7.9
+    },
+    {
+      "label": "body / background",
+      "contrast": 14.24
+    },
+    {
+      "label": "muted / background",
+      "contrast": 5.45
+    },
+    {
+      "label": "AI citation",
+      "contrast": 7.54
+    },
+    {
+      "label": "primary / selected",
+      "contrast": 6.7
+    }
+  ]
+}

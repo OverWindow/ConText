@@ -44,6 +44,7 @@
   "build": {
     "appId": "ai.context.desktop",
     "productName": "ConText Desktop",
+    "protocols": [{ "name": "ConText account return", "schemes": ["context-desktop"] }],
     "directories": {
       "output": "release"
     },

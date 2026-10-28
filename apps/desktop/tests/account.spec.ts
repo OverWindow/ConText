@@ -131,3 +131,56 @@ test('browser login can be cancelled and server errors keep guest mode usable', 
     await expect(page.getByRole('button', { name: '첫 폴더 연결하기' })).toBeEnabled();
   } finally { if (app) await app.close(); await rm(base, { recursive: true, force: true }); }
 });
+
+test('server callback returns to the packaged app through open-url and second-instance', async () => {
+  const base = await mkdtemp(path.join(os.tmpdir(), 'context-server-return-'));
+  const server = createServer((request, response) => {
+    response.setHeader('Content-Type', 'application/json');
+    if (request.url === '/api/desktop/auth/config') response.end(JSON.stringify({ supabase_url: 'https://auth.example.test', publishable_key: 'synthetic-key', desktop_callback_path: '/api/desktop/auth/callback' }));
+    else if (request.url === '/api/me' && request.headers.authorization === 'Bearer synthetic-access') response.end(JSON.stringify(profile));
+    else { response.statusCode = 401; response.end('{}'); }
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const serverBaseUrl = `http://127.0.0.1:${(server.address() as any).port}`;
+  const executablePath = process.env.CONTEXT_DESKTOP_EXECUTABLE;
+  let application: ElectronApplication | undefined;
+  try {
+    application = await electron.launch({ executablePath, args: executablePath ? ['--user-data-dir=' + base] : ['.'], cwd: process.cwd(), env: { ...process.env, CONTEXT_DESKTOP_DATA_DIR: base, CONTEXT_SERVER_URL: serverBaseUrl } });
+    const page = await application.firstWindow();
+    await application.evaluate(({ app, shell }) => {
+      const originalFetch = globalThis.fetch;
+      (globalThis as any).__returnKind = 'open-url';
+      globalThis.fetch = async (input: any, init: any) => {
+        if (String(input).startsWith('https://auth.example.test/auth/v1/token')) {
+          const body = JSON.parse(init.body);
+          if (body.auth_code !== 'synthetic-server-code' || body.code_verifier.length < 43) throw new Error('Invalid code exchange');
+          return new Response(JSON.stringify({ access_token: 'synthetic-access', refresh_token: 'synthetic-refresh', expires_in: 3600 }));
+        }
+        if (String(input).startsWith('https://auth.example.test/auth/v1/logout')) return new Response(null, { status: 204 });
+        return originalFetch(input, init);
+      };
+      shell.openExternal = async target => {
+        const authorize = new URL(target), callback = new URL(authorize.searchParams.get('redirect_to')!);
+        if (!/^\/api\/desktop\/auth\/callback\/[a-f0-9]{48}$/.test(callback.pathname)) throw new Error('Expected server callback path');
+        (globalThis as any).__serverReturnURL = callback.origin + callback.pathname;
+        const link = `context-desktop://auth/callback?state=${callback.pathname.split('/').at(-1)}&code=synthetic-server-code`;
+        if ((globalThis as any).__returnKind === 'open-url') app.emit('open-url', { preventDefault() {} } as any, link);
+        else app.emit('second-instance', {} as any, ['ConText Desktop', link], '', {});
+      };
+    });
+    for (const kind of ['open-url', 'second-instance']) {
+      await application.evaluate((_electron, mode) => { (globalThis as any).__returnKind = mode; }, kind);
+      await page.getByRole('button', { name: '로그인', exact: true }).click();
+      await page.getByRole('button', { name: 'Google로 계속하기' }).click();
+      await expect(page.getByText('로그인됨', { exact: true }).first()).toBeVisible();
+      expect((await page.evaluate(() => window.contextDesktop.accountStatus())).status).toBe('signed_in');
+      expect(await application.evaluate(() => (globalThis as any).__serverReturnURL)).toMatch(/\/api\/desktop\/auth\/callback\/[a-f0-9]{48}$/);
+      await page.getByRole('button', { name: '로그아웃', exact: true }).click();
+      await page.getByRole('button', { name: '로그인 없이 계속', exact: true }).click();
+    }
+  } finally {
+    if (application) await application.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    await rm(base, { recursive: true, force: true });
+  }
+});

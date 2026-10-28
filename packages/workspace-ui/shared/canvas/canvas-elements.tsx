@@ -18,7 +18,8 @@ const palette: Record<string, [string, string, string]> = {
   rose: ["var(--danger-soft)", "var(--danger-border)", "var(--danger)"],
   slate: ["var(--surface-subtle)", "var(--border)", "var(--text-secondary)"],
 };
-const colors = { violet: "보라", blue: "파랑", green: "초록", amber: "노랑", rose: "분홍", slate: "회색" };
+// Keep persisted color keys compatible while naming the current theme accurately.
+const colors = { violet: "와인", blue: "크림슨", green: "초록", amber: "노랑", rose: "분홍", slate: "회색" };
 export const elementNodeId = (id: string) => `element:${id}`;
 const databaseId = (id: string) => id.replace(/^element:/, "");
 function toNode(element: CanvasElement): ElementNode {

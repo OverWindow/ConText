@@ -4,7 +4,7 @@ import { open, readFile, realpath, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { AIConnections } from './ai-connections.mjs';
+import { AIConnections, DESKTOP_AUTH_SCHEME } from './ai-connections.mjs';
 import { DesktopAccount } from './account.mjs';
 import { UnifiedTransfer } from './unified-transfer.mjs';
 
@@ -12,11 +12,24 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const assets = path.resolve(here, '../dist');
 const inside = (root, file) => { const r = path.relative(root, file); return !r || (!r.startsWith(`..${path.sep}`) && r !== '..' && !path.isAbsolute(r)); };
 protocol.registerSchemesAsPrivileged([{ scheme: 'context', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
+// macOS can deliver open-url before ready. Keep the URI in the main process only.
+let receiveAppURL, initialAppURL;
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  if (typeof url !== 'string' || url.length > 8192 || !url.startsWith(`${DESKTOP_AUTH_SCHEME}://`)) return;
+  if (receiveAppURL) receiveAppURL(url); else initialAppURL = url;
+});
+app.on('second-instance', (_event, commandLine) => {
+  const url = commandLine.find(value => typeof value === 'string' && value.startsWith(`${DESKTOP_AUTH_SCHEME}://`));
+  if (receiveAppURL) receiveAppURL(url); else if (url) initialAppURL = url;
+});
 if (!app.isPackaged && process.env.CONTEXT_DESKTOP_DATA_DIR) app.setPath('userData', path.resolve(process.env.CONTEXT_DESKTOP_DATA_DIR));
 if (!app.requestSingleInstanceLock()) { app.quit(); } else { start().catch(error => { dialog.showErrorBox('ConText 시작 오류', error.message); app.quit(); }); }
 
 async function start() {
   await app.whenReady();
+  if (app.isPackaged) app.setAsDefaultProtocolClient(DESKTOP_AUTH_SCHEME);
+  else if (process.platform === 'win32' && process.defaultApp && process.argv[1]) app.setAsDefaultProtocolClient(DESKTOP_AUTH_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
   const ai = new AIConnections(app.getPath('userData'), {
     secureStorage: {
       available: async () => ['darwin', 'win32'].includes(process.platform) && await safeStorage.isAsyncEncryptionAvailable(),
@@ -315,7 +328,7 @@ async function start() {
   });
   handle('reveal', async (id, entryId) => { const entry = await call('resolveEntry', id, entryId); shell.showItemInFolder(entry.filename); });
   function createWindow() {
-    window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, backgroundColor: '#F7F9FC', title: 'ConText Desktop',
+    window = new BrowserWindow({ width: 1440, height: 940, minWidth: 1000, minHeight: 680, backgroundColor: '#FAF8F5', title: 'ConText Desktop',
       webPreferences: { preload: path.join(here, 'preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false, webSecurity: true } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
@@ -323,9 +336,18 @@ async function start() {
     window.loadURL('context://app/index.html');
     window.on('closed', () => { window = null; });
   }
-  app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
+  receiveAppURL = url => {
+    const accepted = ai.handleLoginCallback(url);
+    if (!window) createWindow();
+    if (window.isMinimized()) window.restore();
+    window.show(); window.focus();
+    return accepted;
+  };
   app.on('activate', () => { if (!window) createWindow(); });
   app.on('window-all-closed', () => app.quit());
+  const launchURL = initialAppURL || process.argv.find(value => value.startsWith(`${DESKTOP_AUTH_SCHEME}://`));
+  initialAppURL = null;
+  if (launchURL) receiveAppURL(launchURL);
   app.on('before-quit', event => {
     if (stopping) return;
     event.preventDefault(); stopping = true; cloud.cancel(); account.cancel(); clearInterval(accountTimer); clearInterval(syncTimer);
@@ -338,6 +360,6 @@ async function start() {
   powerMonitor.on('resume', () => { void account.refresh().catch(() => {}); });
   powerMonitor.on('resume', () => call('list').then(list => Promise.all(list.map(item => call('scan', item.id)))).catch(() => {}));
   powerMonitor.on('resume', () => { void automaticSync().catch(() => {}); });
-  createWindow();
+  if (!window) createWindow();
   void account.refresh().then(() => automaticSync()).catch(() => {});
 }

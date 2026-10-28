@@ -6,6 +6,7 @@ import { LuPencil, LuCheck, LuUndo2, LuRedo2, LuEye, LuEyeOff, LuSquareDashedMou
 import { useFolderVisibility } from '../shared/canvas/use-folder-visibility';
 import { projectFolders } from '../shared/canvas/folder-projection';
 import { planInsertion, type PlacementBox, type PlacementShift } from '../shared/canvas/local-placement';
+import { creationDirectory as selectedDirectory, sharedFolder } from '../shared/canvas/file-creation';
 import { settledCanvas } from '../shared/canvas/settled-canvas';
 import { CanvasDock } from '../shared/canvas/canvas-dock';
 import { CanvasSurface } from '../shared/canvas/canvas-surface';
@@ -71,7 +72,7 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
   const referenceViewport = useRef<{ view: Viewport; navigation: number } | null>(null);
   const restoringReferences = useRef(false);
   const referenceMode = referenceIds.length > 0;
-  const summaryRequest = useRef<{ signature: string; request_id: string; x: number; y: number } | null>(null);
+  const summaryRequest = useRef<{ signature: string; request_id: string; directory: string; x: number; y: number } | null>(null);
   const repository = useMemo<CanvasElementRepository>(() => ({
     create: async value => { const owner = creationDirectory.current ?? directory; const result = await api.putCanvasItem(workspaceId, owner, 'element', value, 0); cache.current.set(value.id, result); owners.set(value.id, owner); return result; },
     update: async (id, patch) => {
@@ -326,14 +327,14 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
       history.record({ label: '연결 삭제', undo: async () => { revision = (await relationSave(value, revision)).revision; }, redo: async () => { await api.removeCanvasItem(workspaceId, relationOwners.current.get(value.id) ?? directory, value.id, revision); revision++; setRelations(current => current.filter(r => r.id !== value.id)); } });
     } catch (reason) { error((reason as Error).message); } finally { setBusy(false); }
   }
-  function insertionContext(fixedDirectory?: string, origin?: { x: number; y: number }) {
+  function insertionContext(fixedDirectory?: string, origin?: { x: number; y: number }, folderId?: string | null) {
     const rect = area.current?.getBoundingClientRect();
     const point = origin || (rect && flow.current ? flow.current.screenToFlowPosition({ x: rect.x + rect.width / 2, y: rect.y + topInset + (rect.height - topInset - 64) / 2 }) : { x: 0, y: 0 });
     const physical = [...layout.placements.values()].filter(p => p.entry.kind === 'directory' && visibility.opened.has(p.entry.id) && point.x >= p.world.x && point.y >= p.world.y && point.x <= p.world.x + p.width && point.y <= p.world.y + p.height).sort((a, b) => a.width * a.height - b.width * b.height)[0];
     const name = fixedDirectory ?? physical?.entry.relative_path ?? directory, scope = layout.scopes.get(name);
     const scale = scope?.scale || 1;
     const local = { x: (point.x - (scope?.origin.x || 0)) / scale, y: (point.y - (scope?.origin.y || 0)) / scale };
-    const parent = elements.nodes.filter(node => (owners.get(node.data.element.id) || '') === name && node.data.element.kind === 'rectangle' && visibility.opened.has(node.id))
+    const parent = folderId !== undefined ? elements.nodes.find(node => node.id === folderId && (owners.get(node.data.element.id) || '') === name) : elements.nodes.filter(node => (owners.get(node.data.element.id) || '') === name && node.data.element.kind === 'rectangle' && visibility.opened.has(node.id))
       .filter(node => local.x >= node.position.x && local.y >= node.position.y && local.x <= node.position.x + node.data.element.width && local.y <= node.position.y + node.data.element.height)
       .sort((a, b) => a.data.element.width * a.data.element.height - b.data.element.width * b.data.element.height)[0];
     const parentId = parent?.id;
@@ -377,7 +378,7 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
   }
   function insertionPlan(kind: 'file' | 'rectangle', context: ReturnType<typeof insertionContext>) {
     const size = kind === 'file' ? { width: 200, height: 290 } : { width: Math.min(320, context.parent ? Math.max(80, context.parent.width - 48) : 320), height: Math.min(240, context.parent ? Math.max(60, context.parent.height - 48) : 240) };
-    const point = { x: Math.max(context.parent ? context.parent.x + 24 : -99000, Math.min(99000, context.point.x - size.width / 2)), y: Math.max(context.parent ? context.parent.y + 24 : -99000, Math.min(99000, context.point.y - size.height / 2)) };
+    const point = { x: Math.max(context.parent ? context.parent.x + 24 : -99000, Math.min(context.parent ? context.parent.x + Math.max(24, context.parent.width - size.width - 24) : 99000, context.point.x - size.width / 2)), y: Math.max(context.parent ? context.parent.y + 24 : -99000, Math.min(context.parent ? context.parent.y + Math.max(24, context.parent.height - size.height - 24) : 99000, context.point.y - size.height / 2)) };
     const parent = context.parent;
     const area = parent ? { x: parent.x + 24, y: parent.y + 24, width: 1952, height: 1952 } : undefined;
     const incoming = { id: 'new-item', ...point, ...size }, plan = planInsertion(incoming, context.siblings, true, area);
@@ -410,15 +411,15 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
     } catch (reason) { error((reason as Error).message); }
     finally { creationDirectory.current = undefined; setBusy(false); }
   }
-  async function insertFile(create: () => Promise<Entry>, name: string, source?: Entry) {
+  async function insertFile(create: (location: { directory: string; x: number; y: number }) => Promise<Entry>, name: string, source?: Entry, destination?: { directory: string; origin: { x: number; y: number }; folderId: string | null }) {
     if (busy || history.busy || !await elements.flush()) throw new Error('캔버스 저장을 완료한 뒤 다시 추가해 주세요.');
     const placement = source ? layout.placements.get(source.id) : undefined;
     const origin = placement ? { x: placement.world.x + placement.width + 124 * (layout.scopes.get(source!.parent_path)?.scale || 1), y: placement.world.y + placement.height / 2 } : undefined;
-    const context = insertionContext(source?.parent_path ?? directory, origin), plan = insertionPlan('file', context);
+    const context = insertionContext(destination?.directory ?? source?.parent_path ?? directory, destination?.origin ?? origin, destination ? destination.folderId : source ? sharedFolder([source.id], logicalOwners) : undefined), plan = insertionPlan('file', context);
     setBusy(true); setPendingFile({ name, directory: context.name, hideNew: !!source, existing: new Set(snapshot.entries.map(entry => entry.id)) });
     let created: Entry | undefined;
     try {
-      await pinFolderAnchors(); created = await create();
+      await pinFolderAnchors(); created = await create({ directory: context.name, ...plan.position });
       // The native picker determines the physical parent. Only place in the scope
       // actually chosen by the creator, never move a file between directories here.
       if (created.parent_path !== context.name) return created;
@@ -439,15 +440,20 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
   async function summarize() {
     if (!summaryReady || summaryBusy) return;
     setSummaryBusy(true); setSummaryError('');
-    const ids = selectedFiles.map(n => n.id).sort(), signature = JSON.stringify(selectedFiles.map(n => [n.id, n.data.entry.mtime, n.data.entry.size]).sort());
-    if (summaryRequest.current?.signature !== signature) summaryRequest.current = { signature, request_id: crypto.randomUUID(), x: Math.min(99000, Math.max(...selectedFiles.map(n => storedPosition(layout, n.data.entry, n.position).x)) + 320), y: storedPosition(layout, selectedFiles[0].data.entry, selectedFiles[0].position).y };
+    const ids = selectedFiles.map(n => n.id).sort(), targetDirectory = selectedDirectory(selectedFiles.map(n => n.data.entry));
+    const folderId = sharedFolder(ids, logicalOwners);
+    const signature = JSON.stringify([targetDirectory, folderId, selectedFiles.map(n => [n.id, n.data.entry.mtime, n.data.entry.size]).sort()]);
+    const placements = selectedFiles.map(n => layout.placements.get(n.id)).filter(p => !!p);
+    const scale = layout.scopes.get(targetDirectory)?.scale || 1;
+    const origin = { x: Math.max(...placements.map(p => p.world.x + p.width)) + 124 * scale, y: (Math.min(...placements.map(p => p.world.y)) + Math.max(...placements.map(p => p.world.y + p.height))) / 2 };
     try {
-      const { request_id, x, y } = summaryRequest.current;
-      const entry = await insertFile(async () => {
+      const entry = await insertFile(async location => {
+        if (summaryRequest.current?.signature !== signature) summaryRequest.current = { signature, request_id: crypto.randomUUID(), ...location };
+        const { request_id, directory, x, y } = summaryRequest.current;
         const created = await api.summarizeSelection(workspaceId, { request_id, entry_ids: ids, directory, x, y });
         if (!created) throw new Error('요약 파일을 만들지 못했습니다.');
         return created;
-      }, '');
+      }, '', undefined, { directory: targetDirectory, origin, folderId });
       summaryRequest.current = null; setSelecting(false); setNodes(current => current.map(n => ({ ...n, selected: false })));
       if (entry) inspect(entry);
     } catch (reason) { setSummaryError((reason as Error).message); } finally { setSummaryBusy(false); }
@@ -486,6 +492,10 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
     return { ...node, hidden: physicallyHidden(entry) || !!pendingFile && (pendingFile.hideNew || entry.name === pendingFile.name) && entry.parent_path === pendingFile.directory && !pendingFile.existing.has(entry.id), draggable: interactive, connectable: interactive, data: { ...node.data, copy: async (source: Entry, requestId: string, versionId?: string) => { await insertFile(() => api.copyFile(workspaceId, source.id, requestId, versionId), source.name + ' copy', source); }, referenced: referenceIds.includes(node.id), connections: relations.filter(r => r.source_document_id === node.id || r.target_document_id === node.id).length } };
   });
   const hiddenEntries = new Set(renderedEntries.filter(node => node.hidden).map(node => node.id));
+  const edgeBounds = new Map(nodes.map(node => {
+    const placement = layout.placements.get(node.id);
+    return [node.id, { x: (placement?.world.x || 0) + node.position.x - (placement?.position.x || 0), y: (placement?.world.y || 0) + node.position.y - (placement?.position.y || 0), width: node.width || 200, height: node.height || 244 }];
+  }));
   return <div className={`desktop-canvas-surface ${layoutMotion ? 'canvas-layout-motion' : ''} ${editing ? 'is-editing' : 'is-browsing'}`} ref={area} tabIndex={-1} onKeyDown={event => {
     if (event.target instanceof HTMLElement && event.target.closest('input,textarea,select,[contenteditable=true],dialog')) return;
     if (event.key === 'Escape') { setSelecting(false); setEdgeMenu(undefined); }
@@ -494,7 +504,7 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
     if (editing && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) && !(event.target instanceof HTMLElement && event.target.closest('input,textarea'))) void move(nodes.filter(n => n.selected).map(n => storedPosition(layout, n.data.entry, n.position)));
   }}>
     <CanvasSurface<CanvasNode> nodes={[...renderedEntries, ...elementNodes]}
-      edges={relations.filter(r => nodes.some(n => n.id === r.source_document_id) && nodes.some(n => n.id === r.target_document_id)).map(r => ({ ...edgeFor(r), label: showLabels ? relationLabels[r.relation_type] : undefined, hidden: !!query || hiddenEntries.has(r.source_document_id) || hiddenEntries.has(r.target_document_id) }))}
+      edges={relations.filter(r => nodes.some(n => n.id === r.source_document_id) && nodes.some(n => n.id === r.target_document_id)).map(r => ({ ...edgeFor(r, edgeBounds.get(r.source_document_id), edgeBounds.get(r.target_document_id), nodes.filter(n => n.type === 'file' && n.id !== r.source_document_id && n.id !== r.target_document_id && !hiddenEntries.has(n.id)).map(n => edgeBounds.get(n.id)!)), label: showLabels ? relationLabels[r.relation_type] : undefined, hidden: !!query || hiddenEntries.has(r.source_document_id) || hiddenEntries.has(r.target_document_id) }))}
       nodeTypes={nodeTypes} maxZoom={visibility.maxZoom} nodeExtent={undefined} onlyRenderVisibleElements={false} nodesConnectable={editing && !selecting && !busy && !history.busy && !summaryBusy && !query && !referenceMode} nodesDraggable={editing && !selecting && !busy && !history.busy && !summaryBusy && !query && !referenceMode} connectionMode={ConnectionMode.Loose}
       defaultViewport={flat ? { x: 64, y: Math.max(80, topInset + 24), zoom: .8 } : saved || { x: 64, y: Math.max(80, topInset + 24), zoom: .8 }} onInit={instance => { flow.current = instance; setZoom(instance.getZoom()); setReady(true); }} onMove={(_event, view) => setZoom(view.zoom)}
       onNodesChange={changes => {
@@ -528,8 +538,8 @@ export function WorkspaceCanvas({ snapshot, directory, navigationSequence, onFoc
     {toolbarHost && createPortal(<div className="local-canvas-toolbar" role="toolbar" aria-label="캔버스 편집 도구"><button className="icon-button canvas-edit-toggle" disabled={busy || history.busy || referenceMode || selecting} aria-label={editing ? '캔버스 수정 완료' : '캔버스 수정'} title={editing ? '수정 완료' : '캔버스 수정'} aria-pressed={editing} onClick={async () => { if (!await elements.flush()) return; setEditing(!editing); setEdgeMenu(undefined); }}>{editing ? <LuCheck /> : <LuPencil />}</button><div className="canvas-history-tools" role="group" aria-label="캔버스 실행 취소와 다시 실행"><button className="icon-button" aria-label="되돌리기" disabled={busy || history.busy || selecting || !history.undoLabel} title={history.undoLabel ? `${history.undoLabel} 되돌리기 (Ctrl/⌘+Z)` : '되돌리기'} onClick={() => void history.run('undo')}><LuUndo2 /></button><button className="icon-button" aria-label="다시 실행" title="다시 실행 (Ctrl/⌘+Shift+Z)" disabled={busy || history.busy || selecting || !history.redoLabel} onClick={() => void history.run('redo')}><LuRedo2 /></button></div><button className="icon-button" aria-label={showLabels ? '참조 표시 숨기기' : '참조 표시 보이기'} title={showLabels ? '참조 표시 숨기기' : '참조 표시 보이기'} aria-pressed={!showLabels} onClick={() => setShowLabels(!showLabels)}>{showLabels ? <LuEye /> : <LuEyeOff />}</button><button className="icon-button" aria-label="폴더 영역 모아 정렬" title="폴더 영역 모아 정렬" disabled={flat || busy || summaryBusy || history.busy || selecting || !nodes.some(n => n.type === 'directory' && n.data.entry.parent_path === directory)} onClick={() => void compactFolders()}><LuLayoutGrid /></button></div>, toolbarHost)}
     {selecting && <SelectionActions names={selectedFiles.map(n => n.data.entry.name)} ready={summaryReady} busy={summaryBusy} error={summaryError} onClose={() => { setSelecting(false); setNodes(current => current.map(n => ({ ...n, selected: false }))); }} onSummarize={() => void summarize()} onNewRequest={() => { summaryRequest.current = null; setSummaryError(''); }} />}
     <ElementTools toolbarHost={dockHost} selected={selectedElement} editable={editing && !query && !selecting && !referenceMode} busy={elements.busy || busy || history.busy} add={kind => { void insertElement(kind); }} edit={elements.edit} remove={id => void elements.remove(id)} clear={() => elements.setNodes(current => current.map(n => ({ ...n, selected: false })))} />
-    {editing && !selecting && !selectedElement && dockHost && createPortal(<div className="local-relation-options"><select aria-label="연결 유형" title="새 연결 유형" value={kind} onChange={event => setKind(event.target.value as RelationKind)}>{Object.entries(relationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>, dockHost)}
-    {activeRelation && edgeMenu && <ConnectionOptions relation={activeRelation} x={edgeMenu.x} y={edgeMenu.y} source={snapshot.entries.find(e => e.id === activeRelation.source_document_id)?.name || '파일'} target={snapshot.entries.find(e => e.id === activeRelation.target_document_id)?.name || '파일'} busy={busy} error="" onClose={() => setEdgeMenu(undefined)} onDelete={() => void removeRelation(activeRelation)} />}
+    {editing && !selecting && !selectedElement && !activeRelation && dockHost && createPortal(<div className="local-relation-options"><select aria-label="연결 유형" title="새 연결 유형" value={kind} onChange={event => setKind(event.target.value as RelationKind)}>{Object.entries(relationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>, dockHost)}
+    {activeRelation && edgeMenu && dockHost && createPortal(<ConnectionOptions docked relation={activeRelation} x={edgeMenu.x} y={edgeMenu.y} source={snapshot.entries.find(e => e.id === activeRelation.source_document_id)?.name || '파일'} target={snapshot.entries.find(e => e.id === activeRelation.target_document_id)?.name || '파일'} busy={busy} error="" onClose={() => setEdgeMenu(undefined)} onDelete={() => void removeRelation(activeRelation)} />, dockHost)}
     {(elements.status || elements.error || history.error) && <div className="local-canvas-status" role="status">{elements.error || history.error || elements.status}{elements.error && <button onClick={() => void elements.flush()}>텍스트·도형 저장 재시도</button>}</div>}
   </div>;
 }

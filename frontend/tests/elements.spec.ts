@@ -57,7 +57,7 @@ test("text edits, font, resize handle and location persist after reload", async 
   const text = page.getByRole("textbox", { name: "캔버스 텍스트 내용" });
   await text.fill("다음 분기 로드맵\n팀과 함께 정리하는 생각");
   await page.getByLabel("글자 크기", { exact: true }).selectOption("32");
-  await page.getByRole("button", { name: "파랑 색상" }).click();
+  await page.getByRole("button", { name: "크림슨 색상" }).click();
   const node = page.locator('.react-flow__node-decoration');
   const handle = node.locator(info.project.name === 'mobile' ? '.react-flow__resize-control.handle.bottom.left' : '.react-flow__resize-control.handle.bottom.right');
   const box = await handle.boundingBox();

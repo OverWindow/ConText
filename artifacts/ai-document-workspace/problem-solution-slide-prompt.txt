@@ -1,0 +1,37 @@
+Tool: built-in image_gen
+Use case: productivity-visual.
+Create ONE polished Korean presentation slide as a finished raster image, widescreen 16:9, ideally 1920×1080 or higher at the same aspect ratio. This is a clean PowerPoint-style problem-and-solution summary for ConText, a local document workspace that connects to Kyung Hee University's ChatKHU AI. This is not a deck, photo of a slide, device mockup, or screenshot: the entire image IS the flat presentation slide.
+
+Visual style: exceptionally clean professional Korean product presentation. Warm white background #FAF8F5, charcoal #2A2526 typography, crimson #A40F16 accent, pale crimson #F8E9E9 solution area. Crisp precise Korean sans-serif typography, strong hierarchy, generous whitespace, restrained thin line icons (folder search, contextual documents, editable document). No robots, people, mascots, photos, 3D, gradients, fake data, charts, or ornamental graphics. Use typographic text 'ConText' as the brand, no invented logo. Design should feel like an elegant pitch deck slide, readable projected. All Korean MUST be accurate and visually sharp. Do not add any text beyond the exact copy below.
+
+Layout:
+Top left small brand/category line. Beneath it a large, bold headline and smaller subtitle.
+Central area: an orderly 2-column, 3-row paired comparison. Left column headed '기존의 문제', subdued background; right column headed 'ConText의 해결', pale crimson background with crimson headings. Each row has a succinct bold title and one smaller supporting line. Match left and right rows horizontally with three subtle arrows between the columns. Use ample internal padding, balanced column widths, no clutter, not a spreadsheet.
+Bottom: a compact full-width workflow strip of four stages joined by arrows, followed by one discreet footer line.
+
+Exact text:
+Brand/category line: 'ConText · 내 PC에서 시작하는 AI 문서 작업 공간'
+Headline: '내 자료를 AI 작업으로 이어주는 ConText'
+Subtitle: '자료를 찾고, 설명하고, 다시 정리하던 반복을 줄입니다.'
+
+Left column heading: '기존의 문제'
+Left row 1 title: '자료 찾기부터 다시'
+Left row 1 support: '여러 폴더와 파일에서 필요한 내용을 탐색'
+Left row 2 title: 'AI에게 맥락을 매번 설명'
+Left row 2 support: '자료를 복사·전달하고 질문을 준비'
+Left row 3 title: '답변을 다시 문서로 정리'
+Left row 3 support: '결과를 옮겨 초안을 만들고 다시 편집'
+
+Right column heading: 'ConText의 해결'
+Right row 1 title: '쓰던 폴더에서 바로 탐색'
+Right row 1 support: '폴더 연결 · 파일 탐색 · 본문 검색'
+Right row 2 title: '내 자료로 질문하고 근거 확인'
+Right row 2 support: '관련 자료 활용 · 답변의 출처 확인'
+Right row 3 title: '자료에서 초안 작성·수정까지'
+Right row 3 support: '초안 생성 · 수정안 비교 · 문서 내보내기'
+
+Bottom workflow, four stages in order:
+'자료 탐색' → 'AI 질문·출처 확인' → '초안 작성·수정' → '파일 작업 계속'
+Footer: '파일 작업·기록은 내 PC에, AI는 ChatKHU로 연결.'
+
+Factual constraints: do not claim that AI runs offline or that a chat command automatically edits the original file. This slide accurately shows existing folder search, context-backed AI with citations, document draft generation and revision comparison, and continued local file work. Keep all content comfortably within the frame with wide margins. Produce only one finished slide image.

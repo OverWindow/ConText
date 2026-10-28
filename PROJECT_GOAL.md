@@ -1,4 +1,6 @@
 # Project Goal
+> 2026-10-28 방향 변경: 현재 제품의 중심은 **내 문서와 AI가 함께 일하는 로컬 문서 작업 공간**이다. [현재 제품 방향](docs/product-direction.md)을 우선 기준으로 삼는다. 아래 내용은 초기 팀 문서 관리 설계와 기존 기능의 배경으로 보존한다.
+
 ## AI-Native Team Document Management System
 
 ---

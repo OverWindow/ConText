@@ -115,6 +115,66 @@ test('cancelling loopback login closes the listener and never stores a session',
   await assert.rejects(fetch(redirect));
 });
 
+test('HTTPS server callback returns through the app URI with PKCE and matching request state', async t => {
+  let challenge, exchange, appURL, receivedProfile = false;
+  const f = await fixture(t, {
+    openExternal: async target => {
+      const authorize = new URL(target), redirect = new URL(authorize.searchParams.get('redirect_to'));
+      challenge = authorize.searchParams.get('code_challenge');
+      assert.equal(redirect.origin, 'https://context.example.test');
+      assert.match(redirect.pathname, /^\/api\/desktop\/auth\/callback\/[a-f0-9]{48}$/);
+      const state = redirect.pathname.split('/').at(-1);
+      appURL = `context-desktop://auth/callback?state=${state}&code=server-auth-code`;
+      assert.equal(f.ai.handleLoginCallback(appURL.replace(state, 'b'.repeat(48))), false);
+      assert.equal(f.ai.handleLoginCallback(appURL.replace('context-desktop:', 'https:')), false);
+      assert.equal(f.ai.handleLoginCallback(appURL + '&code=second'), false);
+      assert.equal(f.ai.handleLoginCallback(appURL), true);
+      assert.equal(f.ai.handleLoginCallback(appURL), false);
+    },
+    fetcher: async (url, init) => {
+      if (url.endsWith('/config')) return { supabase_url: 'https://auth.example.test', publishable_key: 'synthetic-key', desktop_callback_path: '/api/desktop/auth/callback' };
+      if (url.includes('grant_type=pkce')) {
+        exchange = JSON.parse(init.body);
+        assert.equal(createHash('sha256').update(exchange.code_verifier).digest('base64url'), challenge);
+        return { access_token: 'private-access', refresh_token: 'private-refresh', expires_in: 3600 };
+      }
+      if (url.endsWith('/api/me')) { receivedProfile = true; return { id: '00000000-0000-0000-0000-000000000001', email: 'user@example.test' }; }
+      throw new Error('Unexpected request');
+    },
+  });
+  await f.ai.update({ mode: 'managed', model: '', serverBaseUrl: 'https://context.example.test' });
+  const result = await f.ai.login();
+  assert.equal(result.signed_in, true); assert.equal(receivedProfile, true);
+  assert.equal(exchange.auth_code, 'server-auth-code');
+  assert.equal(appURL.includes(exchange.code_verifier), false);
+  assert.equal(JSON.stringify(result).includes('private-access'), false);
+});
+
+test('server callback cancellation and stale app links never create a session', async t => {
+  let opened, appURL;
+  const ready = new Promise(resolve => { opened = resolve; });
+  const f = await fixture(t, {
+    openExternal: async target => { const redirect = new URL(new URL(target).searchParams.get('redirect_to')); appURL = `context-desktop://auth/callback?state=${redirect.pathname.split('/').at(-1)}&code=stale`; opened(); },
+    fetcher: async url => { assert.ok(url.endsWith('/config')); return { supabase_url: 'https://auth.example.test', publishable_key: 'synthetic-key', desktop_callback_path: '/api/desktop/auth/callback' }; },
+  });
+  assert.equal(f.ai.handleLoginCallback('context-desktop://auth/callback?code=orphan'), false);
+  await f.ai.update({ mode: 'managed', model: '', serverBaseUrl: 'https://context.example.test' });
+  const login = f.ai.login(); await ready;
+  f.ai.cancelLogin(); await assert.rejects(login, { code: 'AUTH_LOGIN_CANCELLED' });
+  assert.equal(f.ai.handleLoginCallback(appURL), false);
+  assert.equal((await f.ai.summary()).signed_in, false);
+});
+
+test('provider denial through the server app link ends only the pending login', async t => {
+  const f = await fixture(t, {
+    openExternal: async target => { const redirect = new URL(new URL(target).searchParams.get('redirect_to')); assert.equal(f.ai.handleLoginCallback(`context-desktop://auth/callback?state=${redirect.pathname.split('/').at(-1)}&error=access_denied`), true); },
+    fetcher: async url => { assert.ok(url.endsWith('/config')); return { supabase_url: 'https://auth.example.test', publishable_key: 'synthetic-key', desktop_callback_path: '/api/desktop/auth/callback' }; },
+  });
+  await f.ai.update({ mode: 'managed', model: '', serverBaseUrl: 'https://context.example.test' });
+  await assert.rejects(f.ai.login(), /취소했거나/);
+  assert.equal((await f.ai.summary()).signed_in, false);
+});
+
 
 test('gateway errors distinguish credits, permissions and unsupported requests without exposing upstream bodies', async t => {
   const original = globalThis.fetch; t.after(() => { globalThis.fetch = original; });

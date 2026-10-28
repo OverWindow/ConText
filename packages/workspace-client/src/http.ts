@@ -342,7 +342,46 @@ export class HttpWorkspaceRepository implements WorkspaceRepository {
     reindex: async () => { await this.request(`${this.prefix}/ai/reindex`, { method: 'POST', body: '{}' }); },
   };
   private async ai(input: Record<string, unknown>): Promise<{ message_id?: string; draft_id?: string; content?: string; answer?: string }> { let job = await this.request<{ request_id: string; status: string; error?: { message?: string }; result?: { message_id?: string; draft_id?: string; content?: string; answer?: string } }>(`${this.prefix}/ai/context`, { method: 'POST', body: JSON.stringify({ ...input, device_id: this.device }) }); for (let attempt = 0; !['complete', 'failed'].includes(job.status) && attempt < 180; attempt++) { await new Promise(resolve => setTimeout(resolve, 1000)); job = await this.request(`${this.prefix}/jobs/${job.request_id}`); } if (job.status !== 'complete') throw new Error(job.error?.message || 'AI 응답 상태를 확인하지 못했습니다. 요청 이력을 보존했습니다.'); return job.result || {}; }
-  async summarizeSelection(_id: string, input: { request_id: string; entry_ids: string[]; directory: string; x: number; y: number }) { const sources: SourceSnapshot[] = []; for (const id of input.entry_ids) { const entry = this.entry(id), doc = this.state.documents[entry.document_id!]; if (!doc.reference_head_id) continue; const parsed = await this.documentVersion(entry, doc.reference_head_id); sources.push({ id: crypto.randomUUID(), kind: 'document', document_id: doc.id, version_id: doc.reference_head_id, quote: parsed.normalized.blocks.map(block => block.text).join('\n').slice(0,12000), label: entry.name, version_number: parsed.version_number }); } const result = await this.ai({ request_id: input.request_id, task: 'summary', prompt: '선택한 문서들의 내용을 출처와 함께 요약해 주세요.', sources }); const text = result.answer || result.content || ''; return this.upload(new File([text], `요약-${input.request_id.slice(0, 8)}.md`, { type: 'text/markdown' }), input.directory); }
+  async summarizeSelection(_id: string, input: { request_id: string; entry_ids: string[]; directory: string; x: number; y: number }) {
+    // Replay an interrupted creation before deciding whether a summary already exists.
+    await this.synchronize();
+    const parentId = this.scope(input.directory);
+    if (input.directory && parentId === this.state.workspace.root_entry_id) throw new Error('요약 파일을 만들 폴더를 찾을 수 없습니다.');
+    const existing = this.state.entries[input.request_id];
+    if (existing?.deleted_at) throw new Error('이 요약 파일은 삭제됐습니다. 새 요약을 시작해 주세요.');
+    if (!existing) {
+      const sources: SourceSnapshot[] = [];
+      for (const id of input.entry_ids) {
+        const entry = this.entry(id), doc = this.state.documents[entry.document_id!];
+        if (!doc.reference_head_id) throw new Error(`${entry.name}: 요약할 본문이 없습니다.`);
+        const parsed = await this.documentVersion(entry, doc.reference_head_id);
+        sources.push({ id: crypto.randomUUID(), kind: 'document', document_id: doc.id, version_id: doc.reference_head_id, quote: parsed.normalized.blocks.map(block => block.text).join('\n').slice(0, 12000), label: entry.name, version_number: parsed.version_number });
+      }
+      const result = await this.ai({ request_id: input.request_id, task: 'summary', prompt: '선택한 문서들의 내용을 출처와 함께 요약해 주세요.', sources });
+      const text = result.answer || result.content || '';
+      if (!text.trim()) throw new Error('요약 내용이 비어 있습니다. AI 응답을 확인해 주세요.');
+      const id = input.request_id, documentId = crypto.randomUUID();
+      const blob = await this.blob(new File([text], `요약-${id.slice(0, 8)}.md`, { type: 'text/markdown' }));
+      await this.createFileWithVersion(id, documentId, parentId, `요약-${id.slice(0, 8)}.md`, {
+        id: crypto.randomUUID(), workspace_id: this.workspaceId, document_id: documentId, blob, parent_version_ids: [], sources,
+        created_at: new Date().toISOString(), created_by: this.actor, change_note: '선택한 파일 요약',
+      }, input.request_id);
+    }
+    const entry = this.entry(input.request_id), document = this.state.documents[entry.document_id!];
+    if (!document.content_head_id) throw new Error('요약 파일의 저장 상태를 확인해 주세요.');
+    if (!entry.area_positioned) await this.savePositions(this.workspaceId, [{ id: entry.id, x: input.x, y: input.y }]);
+    const sources = this.state.versions[document.content_head_id].sources;
+    for (const source of sources) {
+      if (source.kind !== 'document') continue;
+      const target = active(this.state.entries).find(item => item.document_id === source.document_id);
+      if (!target || active(this.state.relations).some(item => item.source_document_id === document.id && item.target_document_id === source.document_id && item.relation_type === 'GENERATED_FROM')) continue;
+      await this.putCanvasItem(this.workspaceId, entry.parent_path, 'relation', {
+        id: crypto.randomUUID(), source_document_id: entry.id, target_document_id: target.id, relation_type: 'GENERATED_FROM',
+      }, 0);
+    }
+    return this.entry(entry.id);
+  }
+
   async conflicts() { return Object.values(this.state.conflicts).filter(item => item.status === 'open').map(item => ({ id: item.id, entity_id: item.entity_id, reason: item.reason, local: item.candidate, remote: (this.state[item.entity_collection] as Record<string, unknown>)[item.entity_id], resolved_at: item.resolved_at, base_revisions: conflictResolutionBases(this.state, item) })); }
   async resolveConflict(id: string, resolution: 'keep_local' | 'keep_remote', reviewedBases?: Record<string, number>) { const conflict = this.state.conflicts[id]; await this.command('ResolveConflict', { id, resolution: resolution === 'keep_local' ? 'apply_candidate' : 'keep_current' }, reviewedBases || conflictResolutionBases(this.state, conflict)); }
   async deleteWorkspace() { await this.command('DeleteWorkspace', {}, { [`workspace:${this.workspaceId}`]: this.state.workspace.revision }); }

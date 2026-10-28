@@ -140,7 +140,7 @@
 .sidebar-compact .canvas-drawing-tools{left:calc(50% + 32px)}
 @media(max-width:760px){.element-inspector{left:80px;right:10px;top:140px;width:auto;max-width:calc(100% - 90px)}}
 
-/* ConText brand roles: blue for actions, violet for AI and citations. */
+/* ConText brand roles: crimson actions, wine AI citations, warm white surfaces. */
 .brand-mark{background:var(--brand-gradient)}
 .canvas-surface{background:radial-gradient(ellipse at 75% 10%,var(--canvas-glow),transparent 60%),var(--background)}
 .sidebar{border-color:var(--border);background:var(--surface)}

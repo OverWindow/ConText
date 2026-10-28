@@ -14,6 +14,8 @@ from app.ai import connections
 from app.ai.generation import generate_from_sources
 from app.ai.provider import AIUnavailable
 from app.ai.service import AIService
+from app.api.desktop_auth_callback import DESKTOP_CALLBACK_PATH
+from app.api.desktop_auth_callback import router as desktop_callback_router
 from app.auth.dependencies import get_current_user
 from app.core.config import get_settings
 from app.db.session import get_db
@@ -31,6 +33,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai-connections"], dependencies=[Depe
 auth_router = APIRouter(
     prefix="/api/desktop/auth", tags=["desktop-auth"], dependencies=[Depends(no_store)]
 )
+auth_router.include_router(desktop_callback_router)
 
 
 def unavailable(error):
@@ -101,6 +104,7 @@ def auth_config():
     return {
         "supabase_url": settings.supabase_url,
         "publishable_key": settings.supabase_publishable_key,
+        "desktop_callback_path": DESKTOP_CALLBACK_PATH,
         **({"unified_api_url": settings.unified_api_url} if settings.unified_api_url else {}),
         **({"web_base_url": settings.web_base_url} if settings.web_base_url else {}),
     }

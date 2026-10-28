@@ -72,3 +72,12 @@
 .local-folder-overview:hover{background:transparent!important;text-shadow:0 0 12px var(--selection-ring)}
 .canvas-layout-motion .react-flow__node:not(.dragging):not(.folder-direct-manipulation){transition:transform 240ms cubic-bezier(.22,1,.36,1)!important}
 @media(prefers-reduced-motion:reduce){.canvas-layout-motion .react-flow__node:not(.dragging):not(.folder-direct-manipulation){transition:none!important}}
+
+/* Connection settings share the bottom dock, including an existing edge's actions. */
+.context-app .canvas-dock .local-relation-options{position:static;inset:auto;transform:none;display:flex;align-items:center;gap:4px;padding:0 4px;margin:0;border:0;border-left:1px solid var(--border);border-radius:0;box-shadow:none;background:transparent}
+.canvas-dock .connection-options.is-docked{position:static;inset:auto;transform:none;display:flex;align-items:center;gap:10px;width:auto;min-width:0;max-width:none;padding:0 6px;margin:0;border:0;border-left:1px solid var(--border);border-radius:0;box-shadow:none;background:transparent;white-space:nowrap}
+.canvas-dock .connection-options.is-docked .connection-options-heading{display:contents}
+.canvas-dock .connection-options.is-docked strong{font-size:11px}
+.canvas-dock .connection-options.is-docked>p:not(.error){max-width:180px;overflow:hidden;text-overflow:ellipsis;display:block;margin:0;font-size:10px}
+.canvas-dock .connection-options.is-docked .connection-delete{margin:0;width:auto;min-height:31px;padding:5px 8px;font-size:11px}
+.canvas-dock .connection-options.is-docked .connection-options-heading>button{order:3;width:28px;height:28px;padding:5px}

@@ -6,15 +6,15 @@
   border-radius: 18px;
   background: transparent;
   box-shadow: none;
-  --paper-accent: #8870E7;
-  --paper-soft: #F0ECFF;
-  --paper-border: #D8D2F5;
-  --paper-type-ink: #6848B9;
+  --paper-accent: var(--file-md-accent);
+  --paper-soft: var(--file-md-soft);
+  --paper-border: var(--file-md-border);
+  --paper-type-ink: var(--file-md-ink);
 }
-.canvas-document.paper-document.file-theme-pdf { --paper-accent: #D65D76; --paper-soft: #FFF0F3; --paper-border: #EDD2DA; --paper-type-ink: #A4324E; }
-.canvas-document.paper-document.file-theme-docx { --paper-accent: #4F80D7; --paper-soft: #EDF3FF; --paper-border: #CDDDF6; --paper-type-ink: #2E64B9; }
-.canvas-document.paper-document.file-theme-hwpx { --paper-accent: #248B91; --paper-soft: #EAF8F7; --paper-border: #C5E5E4; --paper-type-ink: #13767B; }
-.canvas-document.paper-document.file-theme-txt { --paper-accent: #7285A9; --paper-soft: #F0F3FA; --paper-border: #D5DEEE; --paper-type-ink: #4C6285; }
+.canvas-document.paper-document.file-theme-pdf { --paper-accent: var(--file-pdf-accent); --paper-soft: var(--file-pdf-soft); --paper-border: var(--file-pdf-border); --paper-type-ink: var(--file-pdf-ink); }
+.canvas-document.paper-document.file-theme-docx { --paper-accent: var(--file-docx-accent); --paper-soft: var(--file-docx-soft); --paper-border: var(--file-docx-border); --paper-type-ink: var(--file-docx-ink); }
+.canvas-document.paper-document.file-theme-hwpx { --paper-accent: var(--file-hwpx-accent); --paper-soft: var(--file-hwpx-soft); --paper-border: var(--file-hwpx-border); --paper-type-ink: var(--file-hwpx-ink); }
+.canvas-document.paper-document.file-theme-txt { --paper-accent: var(--file-txt-accent); --paper-soft: var(--file-txt-soft); --paper-border: var(--file-txt-border); --paper-type-ink: var(--file-txt-ink); }
 .canvas-document.paper-document.file-theme-folder { --paper-accent: var(--primary); --paper-soft: var(--primary-soft); --paper-border: var(--primary-border); --paper-type-ink: var(--primary-strong); }
 .canvas-document.paper-document.file-theme-image { --paper-accent: var(--success); --paper-soft: var(--success-soft); --paper-border: var(--success-border); --paper-type-ink: var(--success); }
 .paper-document .paper-glyph.paper-glyph-image { left: 18px; top: 138px; width: 164px; height: 42px; border-radius: 7px; overflow: hidden; }

@@ -1,15 +1,17 @@
 import sharp from 'sharp';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-const source = fileURLToPath(new URL('../../design/brand/ConText-lockup-clean.png', import.meta.url));
+const source = fileURLToPath(new URL('../../design/brand/ConText-lockup-crimson.png', import.meta.url));
 const publicDir = fileURLToPath(new URL('../public/brand/', import.meta.url));
 const appDir = fileURLToPath(new URL('../app/', import.meta.url));
+const sharedDir = fileURLToPath(new URL('../../packages/workspace-ui/assets/', import.meta.url));
 await mkdir(publicDir, { recursive: true });
 
-// Fixed export bounds of the selected 1851 × 849 master; both assets share one artwork.
-const logo = await sharp(source).extract({ left: 56, top: 130, width: 1738, height: 575 }).toBuffer();
-const symbol = await sharp(source).extract({ left: 56, top: 130, width: 570, height: 575 }).toBuffer();
+// The selected crimson master is a full-width 2120 × 742 lockup.
+// Keep the symbol separate from the start of the wordmark at x ≈ 710.
+const logo = await sharp(source).toBuffer();
+const symbol = await sharp(source).extract({ left: 0, top: 0, width: 700, height: 742 }).toBuffer();
 const exportPng = (input, size, inset = 0) => sharp(input)
   .resize(size - inset * 2, size - inset * 2, { fit: 'contain', background: '#FFFFFF' })
   .extend({ top: inset, bottom: inset, left: inset, right: inset, background: '#FFFFFF' })
@@ -40,4 +42,5 @@ frames.forEach((frame, index) => {
   offset += frame.length;
 });
 await writeFile(`${appDir}/favicon.ico`, Buffer.concat([header, ...frames]));
-console.log('ConText: logo, symbol, 512px icon, Apple icon and five-size favicon exported.');
+await Promise.all(['context-logo.png', 'context-symbol.png'].map(name => copyFile(`${publicDir}/${name}`, `${sharedDir}/${name}`)));
+console.log('ConText: crimson logo, symbol, app icons and favicon exported for web and desktop.');

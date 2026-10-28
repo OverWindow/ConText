@@ -207,3 +207,26 @@ test('as-of search respects the Korean midnight boundary and rejects normalized 
   assert.throws(() => engine.searchContent(workspace, '예산', 'as_of', '2025-02-31'));
   assert.throws(() => engine.searchContent(workspace, '예산', 'as_of', '2999-01-01'));
 });
+
+test('nested summary and copy outputs stay beside their source files', { skip: !available }, async t => {
+  const base = await mkdtemp(path.join(os.tmpdir(), 'context-summary-folder-'));
+  const root = path.join(base, '자료'), folder = path.join(root, '프로젝트', '회의');
+  await mkdir(folder, { recursive: true });
+  await writeFile(path.join(folder, '원본.md'), '# 회의\n\n담당자가 다음 주 결과를 공유합니다.');
+  const engine = await new WorkspaceEngine(path.join(base, 'data')).init({ watchFiles: false });
+  t.after(async () => { await engine.close(); await rm(base, { recursive: true, force: true }); });
+  const workspace = (await engine.connect(root)).workspace.id;
+  const source = engine.snapshot(workspace).entries.find(entry => entry.name === '원본.md');
+  const copy = await engine.copyFile(workspace, source.id, randomUUID());
+  assert.equal(copy.parent_path, '프로젝트/회의');
+  const input = { request_id: randomUUID(), entry_ids: [source.id], directory: '프로젝트/회의', x: 400, y: 40 };
+  const request = await engine.prepareSummary(workspace, input);
+  const entry = await engine.finishSummary(workspace, input, { content: { title: '회의 요약', blocks: [{ id: 'p', type: 'paragraph', text: '다음 주 결과 공유.', source_ids: [request.sources[0].id] }] }, checks: [] });
+  assert.equal(entry.parent_path, source.parent_path);
+  assert.equal(engine.canvasSnapshot(workspace, '프로젝트/회의').relations.length, 1);
+  assert.equal(engine.canvasSnapshot(workspace, '').relations.length, 0);
+  const { readFile, readdir } = await import('node:fs/promises');
+  assert.ok((await readdir(folder)).includes(entry.name));
+  assert.match(await readFile(path.join(folder, entry.name), 'utf8'), /다음 주 결과 공유/);
+  assert.equal((await engine.prepareSummary(workspace, input)).existing.id, entry.id);
+});

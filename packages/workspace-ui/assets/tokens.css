@@ -1,66 +1,92 @@
-/* ConText · Blue / Violet · Single source of truth for the application palette. */
+/* ConText · Crimson / Warm White / Charcoal · Shared web and desktop palette. */
 :root {
-  /* Brand colors supplied by the product owner. */
-  --primary: #5B6CFF;
-  --secondary: #7C4DFF;
-  --background: #F7F9FC;
+  --primary: #A40F16;
+  --secondary: #7C334B;
+  --background: #FAF8F5;
   --surface: #FFFFFF;
-  --text: #1E293B;
-  --border: #D9E1F2;
+  --text: #2A2526;
+  --border: #E8DEDD;
 
-  /* Supplied ConText identity. Keep artwork colors distinct from action colors. */
-  --brand-indigo: #6366F1;
-  --brand-violet: #A78BFA;
-  --brand-slate: #334155;
-  --brand-light: #E5EAF6;
+  --brand-crimson: #A40F16;
+  --brand-wine: #7C334B;
+  --brand-charcoal: #2A2526;
+  --brand-rose: #C89C9D;
+  --brand-light: #F3E8E5;
+  /* Compatibility for consumers using the original identity token names. */
+  --brand-indigo: var(--brand-crimson);
+  --brand-violet: var(--brand-wine);
+  --brand-slate: var(--brand-charcoal);
 
   /* Tonal variations: actions, selections, and readable secondary copy. */
-  --primary-strong: #4C5DEB;
-  --primary-hover: #4051D8;
-  --primary-soft: #EDF0FF;
-  --primary-border: #B8C2FF;
-  --secondary-strong: #6540CC;
-  --secondary-soft: #F2EDFF;
-  --secondary-border: #D4C5FF;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --surface-subtle: #F1F5FC;
-  --surface-ai: #FAF8FF;
+  --primary-strong: #A40F16;
+  --primary-hover: #850C12;
+  --primary-soft: #F8E9E9;
+  --primary-border: #D8A6A8;
+  --secondary-strong: #7C334B;
+  --secondary-soft: #F7EDF0;
+  --secondary-border: #DEC0CB;
+  --text-secondary: #574D50;
+  --text-muted: #6E6365;
+  --surface-subtle: #F3EFEC;
+  --surface-ai: #FCF5F6;
   --surface-overlay: #FFFFFFF5;
-  --border-soft: #E8EDF7;
-  --grid: #E6EBF5;
-  --focus: #5B6CFF;
-  --selection-ring: #5B6CFF26;
-  --canvas-glow: #E9EEFF80;
-  --backdrop: #1E293B40;
-  --drop-surface: #EDF0FFF5;
+  --background-overlay: #FAF8F5E8;
+  --border-soft: #EFE8E3;
+  --grid: #EAE3E0;
+  --focus: #A40F16;
+  --selection-ring: #A40F1626;
+  --canvas-glow: #F5E8E480;
+  --backdrop: #2A252666;
+  --drop-surface: #F8E9E9F5;
   --on-primary: #FFFFFF;
 
   /* Status and file-type colors remain distinguishable from brand accents. */
-  --success: #16765E;
-  --success-soft: #EAF7F1;
-  --success-border: #A4D6C1;
-  --warning: #966019;
-  --warning-soft: #FFF7E8;
-  --warning-border: #E8CE9B;
-  --danger: #B23E58;
-  --danger-soft: #FFF0F3;
-  --danger-hover: #FCE2E9;
-  --danger-border: #ECB8C5;
-  --info: #3568B8;
-  --info-soft: #EDF4FF;
-  --info-border: #B5CFF3;
-  --diff-added: #175938;
-  --diff-added-bg: #D5F2E1;
-  --diff-removed: #842B32;
-  --diff-removed-bg: #FFE0E2;
-  --citation-highlight: #FFF7D5;
-  --citation-highlight-border: #D4B44C;
+  --success: #226B58;
+  --success-soft: #EDF6F0;
+  --success-border: #B7D6C7;
+  --warning: #8A5B20;
+  --warning-soft: #FCF4E5;
+  --warning-border: #E3CCA4;
+  --danger: #AD3C2F;
+  --danger-soft: #FFF0EA;
+  --danger-hover: #FBE1D7;
+  --danger-border: #E5B4A5;
+  --info: #4E6471;
+  --info-soft: #EFF3F4;
+  --info-border: #C8D4D9;
+  --diff-added: #245D43;
+  --diff-added-bg: #E1F0E4;
+  --diff-removed: #96372D;
+  --diff-removed-bg: #FBE5DF;
+  --citation-highlight: #FFF4D6;
+  --citation-highlight-border: #C4A25B;
+
+  /* File formats remain distinguishable within the warmer palette. */
+  --file-pdf-accent: #C56065;
+  --file-pdf-soft: #FBEDEE;
+  --file-pdf-border: #E9C8CB;
+  --file-pdf-ink: #9C3039;
+  --file-docx-accent: #7C6D70;
+  --file-docx-soft: #F3EFEC;
+  --file-docx-border: #DED5D2;
+  --file-docx-ink: #51464A;
+  --file-hwpx-accent: #36827C;
+  --file-hwpx-soft: #EEF7F4;
+  --file-hwpx-border: #CCE2DC;
+  --file-hwpx-ink: #21665F;
+  --file-md-accent: #9C5B70;
+  --file-md-soft: #F7EDF0;
+  --file-md-border: #E5CDD6;
+  --file-md-ink: #7C334B;
+  --file-txt-accent: #8C8076;
+  --file-txt-soft: #F4F0EB;
+  --file-txt-border: #E4DBD2;
+  --file-txt-ink: #64564D;
 
   /* Elevation and accents. */
-  --shadow-color: #1E293B0D;
-  --shadow-elevated-color: #1E293B1F;
-  --action-shadow: #5B6CFF26;
+  --shadow-color: #2A25260D;
+  --shadow-elevated-color: #2A25261F;
+  --action-shadow: #A40F1626;
   --shadow: 0 10px 40px var(--shadow-color);
   --brand-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
 

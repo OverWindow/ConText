@@ -3,7 +3,7 @@ import { applyCommand, createWorkspaceState } from '../../packages/domain/src/in
 import { createHash } from 'node:crypto';
 import type { CommandEnvelope, EntityChange } from '../../packages/contracts/src/index';
 const workspaceId = '00000000-0000-0000-0000-000000000002', actor = '00000000-0000-0000-0000-000000000001', root = '00000000-0000-0000-0000-000000000003', now = '2026-10-27T00:00:00.000Z';
-async function fixture(page: Page, count = 2) {
+async function fixture(page: Page, count = 2, nested = false) {
     const user = { id: actor, email: 'test@example.test', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} };
     const encode = (v: object) => Buffer.from(JSON.stringify(v)).toString('base64url');
     const token = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: actor, exp: Math.floor(Date.now() / 1000) + 3600, role: 'authenticated' })}.test-signature`;
@@ -32,6 +32,15 @@ async function fixture(page: Page, count = 2) {
     state.canvas_elements[note] = { id: note, workspace_id: workspaceId, scope_id: root, kind: 'text', content: '데스크톱과 같은 메모', color: 'violet', x: -400, y: 0, width: 320, height: 160, sources: [], revision: 1, deleted_at: null };
     const draft = '60000000-0000-0000-0000-000000000001';
     state.drafts[draft] = { id: draft, workspace_id: workspaceId, scope_id: root, title: '공유 초안', content: JSON.stringify({ title: '공유 초안', blocks: [{ id: 'b', type: 'paragraph', text: '데스크톱에서 쓴 초안', level: 1, items: [], rows: [], source_ids: ['legacy-note'] }] }), sources: [{ id: '60000000-0000-0000-0000-000000000002', kind: 'note', element_id: note, scope_id: root, quote: '인용한 메모 내용', label: '메모 출처', metadata: { legacy_id: 'legacy-note' } }], history: [], revision: 1, review: null, deleted_at: null };
+    if (nested) {
+        const folder = '70000000-0000-0000-0000-000000000001';
+        state.entries[folder] = { id: folder, workspace_id: workspaceId, parent_id: root, name: '작업 자료', kind: 'folder', document_id: null, revision: 1, position_revision: 0, x: null, y: null, area_positioned: false, deleted_at: null };
+        for (const [index, entry] of Object.values(state.entries).filter(entry => entry.kind === 'file').entries()) {
+            entry.parent_id = folder; entry.x = index === 0 ? 650 : 40; entry.y = 40; entry.area_positioned = true;
+        }
+        const group = '70000000-0000-0000-0000-000000000002';
+        state.canvas_elements[group] = { id: group, workspace_id: workspaceId, scope_id: folder, kind: 'group', content: JSON.stringify({ shape: 'rectangle', text: '자료 묶음' }), color: 'blue', x: 0, y: 0, width: 1100, height: 850, sources: [], revision: 1, deleted_at: null };
+    }
     await page.route('http://localhost:3102/**', async (route) => {
         const req = route.request(), url = new URL(req.url()), path = url.pathname, body = req.method() === 'POST' ? req.postDataJSON() : null;
         let data: unknown = {};
@@ -86,6 +95,7 @@ async function fixture(page: Page, count = 2) {
             const v = state.versions[path.split('/').at(-2)!];
             data = { url: `http://localhost:3102/test-bytes/${v.blob.id}`, version: v };
         }
+        else if (path.endsWith('/ai/context')) data = { status: 'complete', result: { content: '선택한 문서의 요약입니다.' } };
         else if (path.endsWith('/ai/index-status'))
             data = { ready: 0, jobs: [] };
         else if (path.endsWith('/ai/search'))
@@ -199,3 +209,77 @@ test('rejected input stays visible after reload and exports from recovery', asyn
   await page.locator('.application-space-grid > li > button').first().click();
   await expect(page.getByRole('navigation', { name: '워크스페이스 메뉴', exact: true })).toBeVisible();
  });
+
+
+test('nested copies and summaries stay in their physical and canvas folders with docked connections and wider chat', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'Canvas geometry uses a desktop viewport.');
+  const f = await fixture(page, 2, true);
+  await page.getByRole('button', { name: '작업 자료 폴더 펼치기', exact: true }).click();
+    await page.locator('.react-flow__viewport').evaluate(async element => { let previous = '', stable = 0; while (stable < 12) { await new Promise(requestAnimationFrame); const value = getComputedStyle(element).transform; stable = value === previous ? stable + 1 : 0; previous = value; } });
+  const groupOpen = page.getByRole('button', { name: '자료 묶음 폴더 펼치기', exact: true });
+  if (await groupOpen.isVisible()) await groupOpen.click();
+  const card = page.getByTestId('file-문서-00000.md');
+  await expect(card).toBeVisible();
+  await page.getByRole('button', { name: '캔버스 수정', exact: true }).click();
+  const dock = page.getByRole('toolbar', { name: '캔버스 도구', exact: true });
+  await expect(dock.getByRole('combobox', { name: '연결 유형' })).toBeVisible();
+  await expect(page.locator('.local-relation-options')).toHaveCSS('position', 'static');
+  await card.locator('.paper-caption').click();
+  await card.getByRole('button', { name: '문서-00000.md 복사본 생성하기', exact: true }).click();
+  const folder = '70000000-0000-0000-0000-000000000001', group = '70000000-0000-0000-0000-000000000002';
+  await expect.poll(() => Object.values(f.state().entries).filter(entry => entry.name === '문서-00000 copy.md').length).toBe(1);
+  const assertInside = (entry: ReturnType<typeof f.state>['entries'][string]) => {
+    const bounds = f.state().canvas_elements[group];
+    expect(entry.parent_id).toBe(folder);
+    expect(entry.x).toBeGreaterThanOrEqual(bounds.x);
+    expect(entry.y).toBeGreaterThanOrEqual(bounds.y);
+    expect(entry.x! + 200).toBeLessThanOrEqual(bounds.x + bounds.width);
+    expect(entry.y! + 290).toBeLessThanOrEqual(bounds.y + bounds.height);
+  };
+  await expect.poll(() => Object.values(f.state().entries).find(entry => entry.name === '문서-00000 copy.md')?.area_positioned).toBe(true);
+  assertInside(Object.values(f.state().entries).find(entry => entry.name === '문서-00000 copy.md')!);
+  await page.getByRole('button', { name: '영역 선택', exact: true }).click();
+  const node = page.locator('.react-flow__node-file').filter({ has: card });
+  await node.scrollIntoViewIfNeeded();
+  const rect = (await node.boundingBox())!;
+  await page.mouse.move(rect.x - 5, rect.y - 5); await page.mouse.down();
+  await page.mouse.move(rect.x + rect.width + 5, rect.y + rect.height + 5, { steps: 10 }); await page.mouse.up();
+  await expect(page.getByRole('region', { name: '선택한 파일 작업' })).toContainText('1개 파일 선택');
+  await page.getByRole('button', { name: '요약 파일 만들기', exact: true }).click();
+  await expect.poll(() => Object.values(f.state().entries).filter(entry => entry.name.startsWith('요약-')).length).toBe(1);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: '미리보기 닫기', exact: true }).click();
+  const summary = Object.values(f.state().entries).find(entry => entry.name.startsWith('요약-'))!;
+  assertInside(summary);
+  const relations = Object.values(f.state().relations).filter(relation => relation.source_document_id === summary.document_id);
+  expect(relations).toHaveLength(1);
+  expect(relations[0].relation_type).toBe('GENERATED_FROM');
+  const edge = page.locator('.react-flow__edge').filter({ has: page.locator('path.react-flow__edge-path') }).first();
+  await expect(edge.locator('.react-flow__edge-path')).toHaveAttribute('d', /[CQ]/);
+  await expect.poll(async () => edge.locator('.react-flow__edge-path').evaluate((element, ids) => {
+    const path = element as SVGPathElement;
+    const ends = [path.getPointAtLength(0), path.getPointAtLength(path.getTotalLength())].map(point => new DOMPoint(point.x, point.y).matrixTransform(path.getScreenCTM()!));
+    return ids.map((id, index) => {
+      const box = document.querySelector(`[data-id="${id}"] .paper-sheet`)!.getBoundingClientRect(), point = ends[index];
+      const distance = Math.min(...[[box.left, box.top + box.height / 2], [box.right, box.top + box.height / 2], [box.left + box.width / 2, box.top], [box.left + box.width / 2, box.bottom]].map(([x, y]) => Math.hypot(point.x - x, point.y - y)));
+      return distance < 6;
+    });
+  }, [summary.id, Object.values(f.state().entries).find(entry => entry.document_id === relations[0].target_document_id)!.id])).toEqual([true, true]);
+
+  const point = await edge.locator('.react-flow__edge-path').evaluate(element => {
+      const path = element as SVGPathElement;
+      for (const fraction of [.05, .15, .25, .5, .75, .85, .95]) {
+        const point = path.getPointAtLength(path.getTotalLength() * fraction);
+        const screen = new DOMPoint(point.x, point.y).matrixTransform(path.getScreenCTM()!);
+        if (document.elementFromPoint(screen.x, screen.y)?.closest('.react-flow__edge') === path.closest('.react-flow__edge')) return { x: screen.x, y: screen.y };
+      }
+      throw new Error('No visible segment of the connection');
+    });
+    await page.mouse.click(point.x, point.y);
+  await expect(dock.getByRole('dialog', { name: '연결 옵션' })).toBeVisible();
+  await expect(dock.getByRole('dialog', { name: '연결 옵션' })).toHaveCSS('position', 'static');
+  await page.getByRole('button', { name: '연결 옵션 닫기' }).click();
+  await page.getByRole('button', { name: 'AI 채팅', exact: true }).click();
+  await expect.poll(async () => (await page.locator('.chat-panel').boundingBox())?.width || 0).toBeGreaterThan(450);
+  await page.screenshot({ path: '/tmp/context-folder-chat-web.png' });
+});

@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { LandingPage } from "@/features/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "ConText · 문서를 연결하고, 생각을 이어가세요",
-  description: "흩어진 문서를 하나의 맥락으로. 문서를 연결하고, AI와 생각을 정리하는 ConText를 웹에서 시작하거나 데스크톱 앱으로 만나보세요.",
+  title: "ConText · 내 PC에서 시작하는 AI 문서 작업 공간",
+  description: "내 문서와 AI가 함께 일하는 공간. 평소 쓰던 폴더에서 자료를 찾고, AI에게 묻고, 문서를 다듬으세요. 경희대 ChatKHU와 함께하는 로컬 문서 작업 공간, ConText.",
 };
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ code?: string | string[] }> }) {
